@@ -6,6 +6,7 @@
 
 #include "Functions.h"
 #include <Eigen/Core>
+#include <ceres/jet.h>
 #include <cmath>
 
 /// @brief so3 rotation for very small roatation angle 
@@ -13,6 +14,10 @@
 template<typename T>
 class Rotation_min{ 
 public:
+    /// @brief 3D point rotation function
+    /// @param angle_axis - rotation    
+    /// @param pt - point 
+    /// @param result - rotated point 
     static void f(const T angle_axis[3], const T pt[3], T result[3]) {   
         // (I + aa^) * pt
         result[0] = pt[0] + angle_axis[1] * pt[2] - angle_axis[2] * pt[1];
@@ -20,7 +25,10 @@ public:
         result[2] = pt[2] + angle_axis[0] * pt[1] - angle_axis[1] * pt[0]; 
     }
 
-    static void df_daa(const T pt[3], T result[3]) {    
+    /// @brief 3D point rotation partial derivative by rotation
+    /// @param pt - point
+    /// @param result - partial derivative
+    static void df_daa(const T pt[3], T result[9]) {    
         static const T zero = T(0.0);
         // -pt^ 
         result[0] =  zero;
@@ -36,23 +44,28 @@ public:
         result[8] =  pt[0];
     }
 
-    static void df_dp(const T angle_axis[3], T result[3]) {    
+    /// @brief 3D point rotation partial derivative by point
+    /// @param angle_axis - rotation
+    /// @param result - partial derivative 
+    static void df_dp(const T angle_axis[3], T result[9]) {    
         static const T one = T(1.0);
         // I + aa^
         result[0] = one;
         result[1] = angle_axis[2];
         result[2] = - angle_axis[1];
 
-        result[0] = - angle_axis[2];
-        result[1] = one;
-        result[2] = angle_axis[0];
+        result[3] = - angle_axis[2];
+        result[4] = one;
+        result[5] = angle_axis[0];
 
-        result[0] = angle_axis[1];
-        result[1] = - angle_axis[0];
-        result[2] = one;
+        result[6] = angle_axis[1];
+        result[7] = - angle_axis[0];
+        result[8] = one;
     }
 };
 
+/// @brief precomputed rotation parameters
+/// @tparam T - scalar type
 template<typename T>
 struct AngleAxis {
         T axis[3];
@@ -65,6 +78,10 @@ struct AngleAxis {
 template<typename T>
 class Rotation_full{ 
 public:
+    /// @brief 3D point rotation function
+    /// @param aa - rotation 
+    /// @param pt - point 
+    /// @param f - rotated point  
     static void f(const AngleAxis<T> aa, const T pt[3], T f[3]) {
         static const T one = T(1.0);
         const T a_cross_pt[3] = {aa.axis[1] * pt[2] - aa.axis[2] * pt[1],
@@ -80,6 +97,10 @@ public:
         f[2] = pt[2] * aa.costheta + a_cross_pt[2] * aa.sintheta + aa.axis[2] * tmp;
     }
 
+    /// @brief 3D point rotation partial derivative by rotation
+    /// @param aa - rotation
+    /// @param Rp - rotated point
+    /// @param df_daa - partial derivative 
     static void df_daa(const AngleAxis<T> aa, const T Rp[3], T df_daa[9]) {
         static const T one = T(1.0);
         // -(Rp)^J 
@@ -106,6 +127,7 @@ public:
         CrossProduct(J + 3, Rp, df_daa + 3);
         CrossProduct(J + 6, Rp, df_daa + 6);
     }
+
 
     static void df_dp(const AngleAxis<T> aa, T df_dp[9]) {
         static const T one = T(1.0);
@@ -157,21 +179,21 @@ public:
         Rotation_full<T>::f(aa, pt, Rpt);
     }
 
-    static void f(const T angle_axis[3], const T *pts, size_t size, T *result) {
+    static std::vector<Eigen::Vector3<T>> f(const T angle_axis[3], std::vector<Eigen::Vector3<T>>& pts) {
         using std::hypot;
         using std::sin;
         using std::cos;
         using std::fpclassify;
         static const T one = T(1.0);
-        
+        std::vector<Eigen::Vector3<T>> result(pts.size());
         AngleAxis<T> aa;
         aa.theta = hypot(angle_axis[0], angle_axis[1], angle_axis[2]);
 
         if (FP_ZERO == fpclassify(aa.theta)) {
-            for(size_t i = 0; i < size; ++i) {
-                Rotation_min<T>::f(aa, pts[i * 3], result[i * 3]);
+            for(size_t i = 0; i < pts.size(); ++i) {
+                Rotation_min<T>::f(aa, pts[i * 3], result[i].data());
             }
-            return; 
+            return result; 
         }
         
         aa.costheta = cos(aa.theta);
@@ -181,9 +203,11 @@ public:
         aa.axis[1] = angle_axis[1] * theta_inverse;
         aa.axis[2] = angle_axis[2] * theta_inverse;
 
-        for(size_t i = 0; i < size; ++i) {
-            Rotation_full<T>::f(aa, pts[i * 3], result[i * 3]);
+        for(size_t i = 0; i < pts.size(); ++i) {
+            Rotation_full<T>::f(aa, pts[i].data(), result[i].data());
         }
+
+        return result;
     }
 
     struct RotatedPoint {

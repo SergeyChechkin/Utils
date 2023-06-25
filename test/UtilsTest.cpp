@@ -10,8 +10,7 @@ TEST(SolverUtils, rotationTest) {
     const double aa[3] = {M_PI / 6, 0, 0};
     const double pt[3] = {1, 1, 1};
     
-    Rotation<double>::RotatedPoint result;
-    Rotation<double>::df(aa, pt, result);
+    auto result = Rotation<double>::df(aa, pt);
 
     // using ceres::Jet for comparosing 
     using JetT = ceres::Jet<double, 6>;
@@ -55,13 +54,14 @@ TEST(SolverUtils, rotationTest) {
 
 TEST(SolverUtils, PerformanceDoubleTest) { 
     const double aa[3] = {M_PI / 6, 0, 0};
-    const double pt[3] = {1, 1, 1};
+    Eigen::Vector3d pt = {1, 1, 1};
     
-    Rotation<double>::RotatedPoint result;
+    int count = 1000000;
+    std::vector<Eigen::Vector3d> pts(count, pt);
 
     std::clock_t cpu_start = std::clock();
-    for(int i = 0; i < 10000000; ++i) {
-        Rotation<double>::df(aa, pt, result);
+    for(int i = 0; i < count; ++i) {
+        auto res = Rotation<double>::df(aa, pts[i].data());
     }
     
     std::clock_t cpu_end = std::clock();
@@ -69,16 +69,16 @@ TEST(SolverUtils, PerformanceDoubleTest) {
     std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
 }
 
-TEST(SolverUtils, PerformanceFloatTest) { 
-    const float aa[3] = {M_PI / 6, 0, 0};
-    const float pt[3] = {1, 1, 1};
+TEST(SolverUtils, PerformanceVectorTest) { 
+    const double aa[3] = {M_PI / 6, 0, 0};
+    Eigen::Vector3d pt = {1, 1, 1};
     
-    Rotation<float>::RotatedPoint result;
-
+    int count = 1000000;
+    std::vector<Eigen::Vector3d> pts(count, pt);
+    
     std::clock_t cpu_start = std::clock();
-    for(int i = 0; i < 10000000; ++i) {
-        Rotation<float>::df(aa, pt, result);
-    }
+    
+    auto res = Rotation<double>::df(aa, pts);
     
     std::clock_t cpu_end = std::clock();
     float cpu_duration = 1000.0 * (cpu_end - cpu_start) / CLOCKS_PER_SEC;

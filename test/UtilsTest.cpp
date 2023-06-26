@@ -96,7 +96,7 @@ TEST(SolverUtils, TransformationTest) {
     //std::cout << res_d << std::endl;
 
     auto res = Transformation<double>::df(pose, pt);
-    std::cout << res << std::endl << std::endl;
+    //std::cout << res << std::endl << std::endl;
 
     // using ceres::Jet for comparosing 
     using JetT = ceres::Jet<double, 9>;
@@ -107,6 +107,31 @@ TEST(SolverUtils, TransformationTest) {
     }
     for(int i = 0; i < 3; ++i)  {
         pt_j[i] = JetT(pt[i], i+6);
+    }
+
+    Eigen::Vector3<JetT> res_j;
+    Transformation<JetT>::f(pose_j.data(), pt_j.data(), res_j.data());
+
+    //std::cout << res_j << std::endl << std::endl;
+}
+
+TEST(SolverUtils, TransformationPoseOnlyTest) { 
+
+    const double pose[6] = {M_PI / 5, 0, 0, 1, 2, 3};
+    const double pt[3] = {1, 1, 1};
+
+    auto res = Transformation<double>::df_dp(pose, pt);
+    std::cout << res << std::endl << std::endl;
+
+    // using ceres::Jet for comparosing 
+    using JetT = ceres::Jet<double, 9>;
+    Eigen::Vector<JetT, 6> pose_j;
+    Eigen::Vector3<JetT> pt_j;
+    for(int i = 0; i < 6; ++i)  {
+        pose_j[i] = JetT(pose[i], i);
+    }
+    for(int i = 0; i < 3; ++i)  {
+        pt_j[i] = JetT(pt[i]);
     }
 
     Eigen::Vector3<JetT> res_j;

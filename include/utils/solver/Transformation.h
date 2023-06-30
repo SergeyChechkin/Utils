@@ -6,6 +6,7 @@
 
 #include "Rotation.h"
 #include <ceres/jet.h>
+#include <ceres/rotation.h>
 
 template<typename T>
 class Transformation {
@@ -101,6 +102,34 @@ public:
         result[0].v[5] = zero;
         result[1].v[5] = zero;
         result[2].v[5] = one;
+
+        return result;
+    }
+
+    static Eigen::Vector3<ceres::Jet<T, 6>> df_dp_cj(const T pose[6], const T point[3]) {
+
+        using JetT = ceres::Jet<double, 9>;
+        Eigen::Vector<JetT, 6> pose_j;
+        Eigen::Vector3<JetT> pt_j;
+        for(int i = 0; i < 6; ++i)  {
+            pose_j[i] = JetT(pose[i], i);
+        }
+
+        for(int i = 0; i < 3; ++i)  {
+            pt_j[i] = JetT(point[i]);
+        }
+
+        Eigen::Vector3<JetT> res_j;
+        Transformation<JetT>::f(pose_j.data(), pt_j.data(), res_j.data());
+
+        Eigen::Vector3<ceres::Jet<T, 6>> result;
+
+        for(int i = 0; i < 3; ++i) {
+            result[i].a = res_j[i].a;
+            for(int j = 0; j < 6; ++j) {
+                result[i].v[j] = res_j[i].v[j];
+            }
+        }
 
         return result;
     }

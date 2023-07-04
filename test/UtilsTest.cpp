@@ -120,7 +120,7 @@ TEST(SolverUtils, TransformationPoseOnlyTest) {
     const double pose[6] = {M_PI / 5, 0, 0, 1, 2, 3};
     const double pt[3] = {1, 1, 1};
 
-    auto res = Transformation<double>::df_dp(pose, pt);
+    auto res = Transformation<double>::df_dps(pose, pt);
     std::cout << res << std::endl << std::endl;
 
     // using ceres::Jet for comparosing 

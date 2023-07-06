@@ -23,9 +23,9 @@ public:
         static const T zero = T(0.0);
         Eigen::Vector3<ceres::Jet<T, 9>> result;
         auto rot_res = Rotation<T>::df(pose, src);
-        result[0].a = rot_res.Rpt[0] += pose[3];
-        result[1].a = rot_res.Rpt[1] += pose[4];
-        result[2].a = rot_res.Rpt[2] += pose[5];
+        result[0].a = rot_res.Rpt[0] + pose[3];
+        result[1].a = rot_res.Rpt[1] + pose[4];
+        result[2].a = rot_res.Rpt[2] + pose[5];
 
         result[0].v[0] = rot_res.df_daa[0];
         result[1].v[0] = rot_res.df_daa[1];
@@ -75,9 +75,9 @@ public:
         static const T zero = T(0.0);
         Eigen::Vector3<ceres::Jet<T, 6>> result;
         auto rot_res = Rotation<T>::df(pose, point);
-        result[0].a = rot_res.Rpt[0] += pose[3];
-        result[1].a = rot_res.Rpt[1] += pose[4];
-        result[2].a = rot_res.Rpt[2] += pose[5];
+        result[0].a = rot_res.Rpt[0] + pose[3];
+        result[1].a = rot_res.Rpt[1] + pose[4];
+        result[2].a = rot_res.Rpt[2] + pose[5];
 
         // todo: improve
         result[0].v[0] = rot_res.df_daa[0];

@@ -11,9 +11,15 @@
 #include <ceres/jet.h>
 #include <cmath>
 
+/// @brief Unit plane projection
+/// @tparam T - scalar type
 template<typename T>
 class PerspectiveProjection{ 
 public:
+    /// @brief unit plane projection 
+    /// @param pose - pose 
+    /// @param pnt - 3D point 
+    /// @param prj - 2D projection
     static void f(const T pose[6], const T pnt[3], T prj[2]) {
         T pnt_trans[3];
         Transformation<T>::f(pose, pnt, pnt_trans);
@@ -22,6 +28,10 @@ public:
         prj[1] = pnt_trans[1] / pnt_trans[2];
     }
 
+    /// @brief pose derivativs for unit plane projection  
+    /// @param pose - pose 
+    /// @param point - point
+    /// @return - projected point and derivative
     static Eigen::Vector2<ceres::Jet<T, 6>> df_dps(const T pose[6], const T point[3]) {
         static const T one = T(1.0);
         static const T zero = T(0.0);

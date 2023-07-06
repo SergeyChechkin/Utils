@@ -8,9 +8,15 @@
 #include <ceres/jet.h>
 #include <ceres/rotation.h>
 
+/// @brief 3D rigid body transformation 
+/// @tparam T - scalar type
 template<typename T>
 class Transformation {
 public:
+    /// @brief rigid body transformation
+    /// @param pose - pose 
+    /// @param src - source 3D point 
+    /// @param dst - result 3D point
     static void f(const T pose[6], const T src[3], T dst[3]) {
         Rotation<T>::f(pose, src, dst);
         dst[0] += pose[3];
@@ -18,6 +24,10 @@ public:
         dst[2] += pose[5];
     }
 
+    /// @brief pose and point derivativs  
+    /// @param pose - pose 
+    /// @param point - point
+    /// @return - transformd point and derivatives
     static Eigen::Vector3<ceres::Jet<T, 9>> df(const T pose[6], const T src[3]) {
         static const T one = T(1.0);
         static const T zero = T(0.0);

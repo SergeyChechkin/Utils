@@ -11,7 +11,9 @@ set(SOURCES
     src/ImageUtils.cpp
 
     src/geometry/Triangulation.cpp
+    
     src/solver/HomographySolver.cpp
+    src/solver/PnPSolver.cpp
 )
 
 set(HEADERS

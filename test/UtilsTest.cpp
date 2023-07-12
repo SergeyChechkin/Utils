@@ -5,6 +5,7 @@
 #include "utils/solver/Rotation.h"
 #include "utils/solver/Transformation.h"
 #include "utils/solver/PerspectiveProjection.h"
+#include "utils/geometry/Triangulation.h"
 #include <ceres/jet.h>
 #include <gtest/gtest.h>
 
@@ -68,7 +69,7 @@ TEST(SolverUtils, PerformanceDoubleTest) {
     
     std::clock_t cpu_end = std::clock();
     float cpu_duration = 1000.0 * (cpu_end - cpu_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
+    //std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
 }
 
 TEST(SolverUtils, PerformanceVectorTest) { 
@@ -84,7 +85,7 @@ TEST(SolverUtils, PerformanceVectorTest) {
     
     std::clock_t cpu_end = std::clock();
     float cpu_duration = 1000.0 * (cpu_end - cpu_start) / CLOCKS_PER_SEC;
-    std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
+    //std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
 }
 
 TEST(SolverUtils, TransformationTest) { 
@@ -117,7 +118,7 @@ TEST(SolverUtils, TransformationPoseOnlyTest) {
     const double pt[3] = {1, 1, 1};
 
     auto res = Transformation<double>::df_dps(pose, pt);
-    std::cout << res << std::endl << std::endl;
+    //std::cout << res << std::endl << std::endl;
 
     // using ceres::Jet for comparosing 
     using JetT = ceres::Jet<double, 9>;
@@ -133,12 +134,7 @@ TEST(SolverUtils, TransformationPoseOnlyTest) {
     Eigen::Vector3<JetT> res_j;
     Transformation<JetT>::f(pose_j.data(), pt_j.data(), res_j.data());
 
-    std::cout << res_j << std::endl << std::endl;
-}
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    //std::cout << res_j << std::endl << std::endl;
 }
 
 TEST(SolverUtils, ProjectionTest) { 
@@ -147,7 +143,7 @@ TEST(SolverUtils, ProjectionTest) {
     const double pt[3] = {1, 1, 1};
     
     auto res = PerspectiveProjection<double>::df_dps(pose, pt);
-    std::cout << res << std::endl << std::endl;
+    //std::cout << res << std::endl << std::endl;
 
     // using ceres::Jet for comparosing 
     using JetT = ceres::Jet<double, 9>;
@@ -163,5 +159,34 @@ TEST(SolverUtils, ProjectionTest) {
     Eigen::Vector2<JetT> res_j;
     PerspectiveProjection<JetT>::f(pose_j.data(), pt_j.data(), res_j.data());
 
-    std::cout << res_j << std::endl << std::endl;
+    //std::cout << res_j << std::endl << std::endl;
 }
+
+TEST(TriangulationTest, TriangulatePointDepthsTest) {
+    // world 3d point
+    const Eigen::Vector3d x(1, 1, 5);
+    const Eigen::Vector3d err(0, 0, 0);
+    // second frame transform
+    Eigen::Isometry3d T;
+    T.setIdentity();
+    T.linear() = Eigen::AngleAxisd(0.0, Eigen::Vector3d(1,1,1).normalized()).toRotationMatrix();
+    T.translation() = Eigen::Vector3d(2, 0, 0);
+
+    const Eigen::Vector3d x0 = x - err;
+    const Eigen::Vector3d x1 = T.inverse(Eigen::Isometry) * (x + err);
+    
+    const Eigen::Vector2d y0(x0[0] / x0[2], x0[1] / x0[2]);
+    const Eigen::Vector2d y1(x1[0] / x1[2], x1[1] / x1[2]);
+
+    double d1, d2;
+    TriangulatePointDepths(y0, T, y1, d1, d2);
+
+    ASSERT_EQ(d1, 5);
+    ASSERT_EQ(d2, 5);
+}
+
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+

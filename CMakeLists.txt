@@ -9,6 +9,9 @@ include_directories(${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${CERES_INCLUDE
 set(SOURCES
     src/CeresUtils.cpp
     src/ImageUtils.cpp
+
+    src/geometry/Triangulation.cpp
+    src/solver/HomographySolver.cpp
 )
 
 set(HEADERS

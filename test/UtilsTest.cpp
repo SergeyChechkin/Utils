@@ -185,6 +185,38 @@ TEST(TriangulationTest, TriangulatePointDepthsTest) {
     ASSERT_EQ(d2, 5);
 }
 
+TEST(SolverUtils, UnitQuaternionTest) { 
+    const double aa[3] = {M_PI / 6, 0.1, 0.2};
+    const double pt[3] = {1, 2, 1};
+
+    Eigen::Matrix3d rot;
+    ceres::AngleAxisToRotationMatrix(aa, rot.data());   
+    Eigen::Quaterniond qt(rot);
+    Eigen::Vector4d qt_vec = qt.coeffs();
+
+    Eigen::Matrix<double, 3, 4> J;
+    RotationUnitQuaternion<double>::df_dq(qt_vec.data(), pt, res_f.data(), J.data());
+    std::cout << res_f.transpose() << std::endl;
+    std::cout << J << std::endl;
+
+    using JetT = ceres::Jet<double, 4>;
+    Eigen::Vector4<JetT> qt_j;
+    Eigen::Vector3<JetT> pt_j;
+
+    for(int i = 0; i < 4; ++i)  {
+        qt_j[i] = JetT(qt_vec[i], i);
+    }
+
+    for(int i = 0; i < 3; ++i)  {
+        pt_j[i] = JetT(pt[i]);
+    }
+
+    Eigen::Vector3<JetT> res_j;
+    RotationUnitQuaternion<JetT>::f(qt_j.data(), pt_j.data(), res_j.data());
+    std::cout << std::endl;
+    std::cout << res_j << std::endl << std::endl;
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

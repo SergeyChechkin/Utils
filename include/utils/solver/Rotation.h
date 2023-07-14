@@ -285,3 +285,51 @@ public:
         return result; 
     }
 };
+
+template<typename T>
+class RotationUnitQuaternion{ 
+public:
+    static void f(const T q[4], const T pt[3], T result[3]) {   
+        static const T two = T(2); 
+        const T uv0 = two * (q[1] * pt[2] - q[2] * pt[1]);
+        const T uv1 = two * (q[2] * pt[0] - q[0] * pt[2]);
+        const T uv2 = two * (q[0] * pt[1] - q[1] * pt[0]);
+        result[0] = pt[0] + q[3] * uv0 + q[1] * uv2 - q[2] * uv1;
+        result[1] = pt[1] + q[3] * uv1 + q[2] * uv0 - q[0] * uv2;
+        result[2] = pt[2] + q[3] * uv2 + q[0] * uv1 - q[1] * uv0;
+    }
+
+    static void df_dq(const T q[4], const T pt[3], T f[3], T df_dq[12]) {  
+        static const T zero = T(0); 
+        static const T one = T(1); 
+        static const T two = T(2); 
+        const T two_pt[3] = {two * pt[0], two * pt[1], two * pt[2]};
+
+        const T uv0 = q[1] * two_pt[2] - q[2] * two_pt[1];
+        const T uv1 = q[2] * two_pt[0] - q[0] * two_pt[2];
+        const T uv2 = q[0] * two_pt[1] - q[1] * two_pt[0];
+        f[0] = pt[0] + q[3] * uv0 + q[1] * uv2 - q[2] * uv1;
+        f[1] = pt[1] + q[3] * uv1 + q[2] * uv0 - q[0] * uv2;
+        f[2] = pt[2] + q[3] * uv2 + q[0] * uv1 - q[1] * uv0;
+
+        //const T duv0_dq[4] = {zero, two_pt[2], -two_pt[1], zero};
+        //const T duv1_dq[4] = {-two_pt[2], zero, two_pt[0], zero};
+        //const T duv2_dq[4] = {two_pt[1], -two_pt[0], zero, zero};
+
+        df_dq[0] = q[1] * two_pt[1] + q[2] * two_pt[2];
+        df_dq[1] = -q[3] * two_pt[2]  -uv2 - q[0] * two_pt[1];
+        df_dq[2] = q[3] * two_pt[1] + uv1 - q[0] * two_pt[2];
+        
+        df_dq[3] = q[3] * two_pt[2] + uv2 - q[1] * two_pt[0];
+        df_dq[4] = q[2] * two_pt[2] + q[0] * two_pt[0];
+        df_dq[5] = -q[3] * two_pt[0] - uv0 - q[1] * two_pt[2];
+        
+        df_dq[6] = - q[3] * two_pt[1] - uv1 - q[2] * two_pt[0];
+        df_dq[7] = q[3] * two_pt[0] + uv0 - q[2] * two_pt[1];        
+        df_dq[8] = q[0] * two_pt[0] + q[1] * two_pt[1];
+        
+        df_dq[9] = uv0;
+        df_dq[10] = uv1;
+        df_dq[11] = uv2;
+    }
+};

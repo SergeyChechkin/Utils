@@ -8,7 +8,7 @@
 
 #include <glog/logging.h>
 
-void HomographySolver::Solve(
+bool HomographySolver::Solve(
     const std::vector<Eigen::Vector2d>& prev, 
     const std::vector<Eigen::Vector2d>& next, 
     Eigen::Isometry3d& pose, 
@@ -47,9 +47,11 @@ void HomographySolver::Solve(
             pose = T;
         }
     }
+
+    return res_counts >= 5; 
 }
 
-void HomographySolver::Solve(
+bool HomographySolver::Solve(
     const std::vector<Eigen::Vector2d>& prev, 
     const std::vector<Eigen::Vector2d>& next, 
     Eigen::Isometry3d& pose,
@@ -92,8 +94,9 @@ void HomographySolver::Solve(
             depths = dpts;
         }
     }
-}
 
+    return res_counts >= 5; 
+}
 
 inline std::vector<cv::Point2f> Convert(const std::vector<Eigen::Vector2d>& src) {
     std::vector<cv::Point2f> result(src.size());
@@ -108,17 +111,28 @@ inline std::vector<cv::Point2f> Convert(const std::vector<Eigen::Vector2d>& src)
     return result;
 }
 
-void HomographySolver::ComputeEssentialMatrix(
+size_t HomographySolver::ComputeEssentialMatrix(
     const std::vector<Eigen::Vector2d>& prev, 
     const std::vector<Eigen::Vector2d>& next, 
     Eigen::Matrix3d& E, 
     const Cofiguration& config) 
 {
     const std::vector<cv::Point2f> prev_cv = Convert(prev); 
-    const std::vector<cv::Point2f> next_cv = Convert(next); 
+    const std::vector<cv::Point2f> next_cv = Convert(next);
+    std::vector<uchar> mask; 
 
-    auto E_cv = cv::findEssentialMat(prev_cv, next_cv, config.focal_, config.pp_, config.method_, config.prob_, config.threshold_, config.max_iters_);
+    auto E_cv = cv::findEssentialMat(
+        prev_cv, next_cv, 
+        config.focal_, 
+        config.pp_, 
+        config.method_, 
+        config.prob_, 
+        config.threshold_, 
+        config.max_iters_,
+        mask);
     cv::cv2eigen(E_cv, E);
+
+    return std::accumulate(mask.begin(), mask.end(), 0);
 }
 
 void HomographySolver::DecomposeEssentialMatrix(
@@ -131,13 +145,13 @@ void HomographySolver::DecomposeEssentialMatrix(
     Eigen::Matrix3d U = svd.matrixU();
     Eigen::Matrix3d V = svd.matrixV().transpose();
 
-    if (U.determinant() < 0) { U *= -1;}
-    if (V.determinant() < 0) { V *= -1;}
+    //if (U.determinant() < 0) { U *= -1;}
+    //if (V.determinant() < 0) { V *= -1;}
 
     Eigen::Matrix3d W;
     W << 0, 1, 0, -1, 0, 0, 0, 0, 1;
 
-    R1 = U * W * V;
-    R2 = U * W.transpose() * V;
+    R1 = (U * W * V).transpose();
+    R2 = (U * W.transpose() * V).transpose();
     t = U.col(2).normalized();
 }

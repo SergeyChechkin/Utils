@@ -19,20 +19,20 @@ public:
         size_t depth_test_itr_ = 100; 
     };
 public:
-    static void Solve(
+    static bool Solve(
         const std::vector<Eigen::Vector2d>& prev, 
         const std::vector<Eigen::Vector2d>& next, 
         Eigen::Isometry3d& pose, 
         const Cofiguration& config);
 
-    static void Solve(
+    static bool Solve(
         const std::vector<Eigen::Vector2d>& prev, 
         const std::vector<Eigen::Vector2d>& next, 
         Eigen::Isometry3d& pose,
         std::vector<double>& depths, 
         const Cofiguration& config);
 private:
-    static void ComputeEssentialMatrix(
+    static size_t ComputeEssentialMatrix(
         const std::vector<Eigen::Vector2d>& prev, 
         const std::vector<Eigen::Vector2d>& next, 
         Eigen::Matrix3d& E, 

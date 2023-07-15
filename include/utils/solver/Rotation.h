@@ -312,10 +312,6 @@ public:
         f[1] = pt[1] + q[3] * uv1 + q[2] * uv0 - q[0] * uv2;
         f[2] = pt[2] + q[3] * uv2 + q[0] * uv1 - q[1] * uv0;
 
-        //const T duv0_dq[4] = {zero, two_pt[2], -two_pt[1], zero};
-        //const T duv1_dq[4] = {-two_pt[2], zero, two_pt[0], zero};
-        //const T duv2_dq[4] = {two_pt[1], -two_pt[0], zero, zero};
-
         df_dq[0] = q[1] * two_pt[1] + q[2] * two_pt[2];
         df_dq[1] = -q[3] * two_pt[2]  -uv2 - q[0] * two_pt[1];
         df_dq[2] = q[3] * two_pt[1] + uv1 - q[0] * two_pt[2];

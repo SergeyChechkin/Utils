@@ -260,8 +260,8 @@ TEST(SolverUtils, HomographyTest) {
 
     Eigen::Isometry3d gt_T;
     gt_T.setIdentity();
-    gt_T.translation() = Eigen::Vector3d(0.1, 0.2, 0.3);
-    gt_T.linear() = Eigen::AngleAxisd(0.1, Eigen::Vector3d(1, 2, 3).normalized()).toRotationMatrix();
+    gt_T.translation() = Eigen::Vector3d(0.1, 0.1, 0.1);
+    gt_T.linear() = Eigen::AngleAxisd(0.1, Eigen::Vector3d(1, 1, 1).normalized()).toRotationMatrix();
 
     size_t size = 1000;
     std::vector<Eigen::Vector3d> map(size);
@@ -288,6 +288,63 @@ TEST(SolverUtils, HomographyTest) {
     std::clock_t cpu_end = std::clock();
     float cpu_duration = 1000.0 * (cpu_end - cpu_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
+
+    Eigen::Matrix3d R(hmg_T.rotation());
+    Eigen::Vector3d aa;
+    ceres::RotationMatrixToAngleAxis(R.data(), aa.data());
+    std::cout << "aa - " << aa.transpose() << std::endl;
+    std::cout << "t - " << hmg_T.translation().transpose() << std::endl;
+
+}
+
+TEST(SolverUtils, HomographyCeresTest) {
+    std::default_random_engine gen;
+    std::uniform_real_distribution<double> dist(-1.0, 1.0);
+
+    Eigen::Vector3d aa(0.1, 0.1, 0.1);
+    Eigen::Vector3d t(0.1, 0.1, 0.1);
+
+
+    Eigen::Isometry3d gt_T;
+    gt_T.setIdentity();
+    gt_T.translation() = t;
+    gt_T.linear() = Eigen::AngleAxisd(aa.norm(), aa.normalized()).toRotationMatrix();
+
+    size_t size = 1000;
+    std::vector<Eigen::Vector3d> map(size);
+    std::vector<Eigen::Vector2d> frame_w(size);
+    std::vector<Eigen::Vector2d> frame_t(size);
+
+    for(size_t i = 0; i < size; ++i) {
+        Eigen::Vector3d point_3d(dist(gen), dist(gen), dist(gen) + 2);
+        Eigen::Vector3d point_3d_t = gt_T.inverse() * point_3d;
+        map[i] = point_3d;
+        frame_w[i] = Eigen::Vector2d(point_3d[0]/point_3d[2], point_3d[1]/point_3d[2]);
+        frame_t[i] = Eigen::Vector2d(point_3d_t[0]/point_3d_t[2], point_3d_t[1]/point_3d_t[2]);
+
+        double d0, d1;
+        TriangulatePointDepths(frame_w[i], gt_T, frame_t[i], d0, d1);
+        ASSERT_FLOAT_EQ(d0, point_3d[2]);
+        ASSERT_FLOAT_EQ(d1, point_3d_t[2]);
+    }  
+
+    HomographySolver::Cofiguration h_config;
+    std::clock_t cpu_start = std::clock();
+    Eigen::Vector3d aa_ = Eigen::Vector3d::Zero();   
+    
+    Eigen::Vector4d q_;
+    ceres::AngleAxisToQuaternion(aa_.data(), q_.data());   
+    Eigen::Vector3d t_(1, 0, 0);
+    HomographySolver::Solve_Ceres_qt(frame_w, frame_t, q_, t_);
+    
+    std::clock_t cpu_end = std::clock();
+    float cpu_duration = 1000.0 * (cpu_end - cpu_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
+
+    ceres::QuaternionToAngleAxis(q_.data(), aa_.data());
+
+    std::cout << "aa - " << aa_.transpose() << std::endl;
+    std::cout << "t - " << t_.transpose() << std::endl;
 }
 
 int main(int argc, char **argv) {

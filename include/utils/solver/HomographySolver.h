@@ -17,6 +17,10 @@ public:
         double threshold_ = 0.001;   // unit plane units
         int max_iters_ = 1000;
         size_t depth_test_itr_ = 100; 
+
+        const double min_cost = 1.0E-6;
+        const double min_cost_change = 1.0E-8;
+        const size_t max_iterations = 50;
     };
 public:
     static bool Solve(
@@ -31,6 +35,12 @@ public:
         Eigen::Isometry3d& pose,
         std::vector<double>& depths, 
         const Cofiguration& config);
+
+    static bool Solve_Ceres_qt(
+        const std::vector<Eigen::Vector2d>& prev, 
+        const std::vector<Eigen::Vector2d>& next, 
+        Eigen::Vector4d& q,  
+        Eigen::Vector3d& t);
 private:
     static size_t ComputeEssentialMatrix(
         const std::vector<Eigen::Vector2d>& prev, 

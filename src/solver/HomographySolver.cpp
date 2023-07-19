@@ -4,7 +4,10 @@
 
 #include "utils/solver/HomographySolver.h"
 #include "utils/geometry/Triangulation.h"
+
 #include <opencv2/core/eigen.hpp>
+#include <ceres/ceres.h>
+#include <ceres/rotation.h>
 
 #include <glog/logging.h>
 
@@ -154,4 +157,77 @@ void HomographySolver::DecomposeEssentialMatrix(
     R1 = (U * W * V).transpose();
     R2 = (U * W.transpose() * V).transpose();
     t = U.col(2).normalized();
+}
+
+class Homography_CF {
+public:
+    template<typename T>
+    bool operator()(const T q[4], const T t[3], T residuals[1]) const {
+
+        Eigen::Matrix3<T> R;
+        ceres::QuaternionToRotation(q, R.data());
+
+        Eigen::Matrix3<T> t_x;
+        t_x << T(0), t[2], -t[1], -t[2], T(0), t[0], t[1], -t[0], T(0);
+
+        const Eigen::Matrix3<T> E = t_x * R;
+
+        const Eigen::Vector3<T> pt_0 = plane_point_0_.homogeneous().cast<T>();
+        const Eigen::Vector3<T> pt_1 = plane_point_1_.homogeneous().cast<T>();
+
+        residuals[0] = pt_1.transpose() * E * pt_0;
+
+        return true;
+    }
+
+    static ceres::CostFunction* Create(const Eigen::Vector2d& plane_point_0, const Eigen::Vector2d& plane_point_1) {
+            return new ceres::AutoDiffCostFunction<Homography_CF, 1, 4, 3>(
+                new Homography_CF(plane_point_0, plane_point_1));
+        }
+
+    static ceres::CostFunction* Create(Homography_CF* cf) {
+            return new ceres::AutoDiffCostFunction<Homography_CF, 1, 4, 3>(cf);
+        }
+
+    Homography_CF(const Eigen::Vector2d& plane_point_0, const Eigen::Vector2d& plane_point_1) 
+        : plane_point_0_(plane_point_0), plane_point_1_(plane_point_1) {}
+private:
+    Eigen::Vector2d plane_point_0_;
+    Eigen::Vector2d plane_point_1_;
+};
+
+bool HomographySolver::Solve_Ceres_qt(
+    const std::vector<Eigen::Vector2d>& prev, 
+    const std::vector<Eigen::Vector2d>& next, 
+    Eigen::Vector4d& q,  
+    Eigen::Vector3d& t) 
+{
+
+    CHECK_EQ(prev.size(), next.size());
+
+    ceres::Problem problem;
+
+    const double loss_threshold = 2.0 / 465;
+    ceres::LossFunction* lf = new ceres::CauchyLoss(loss_threshold);
+
+    for(size_t i = 0; i < prev.size(); ++i) {
+        auto* cf = Homography_CF::Create(prev[i], next[i]);
+        problem.AddResidualBlock(cf, lf, q.data(), t.data());
+    }
+
+    problem.SetManifold(q.data(), new ceres::QuaternionManifold);
+    problem.SetManifold(t.data(), new ceres::SphereManifold<3>);
+
+    ceres::Solver::Options options;
+    options.minimizer_progress_to_stdout = true;
+    options.num_threads = std::thread::hardware_concurrency();
+    options.linear_solver_type = ceres::DENSE_QR;
+
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &problem, &summary);
+
+    std::cerr << summary.BriefReport() << std::endl; 
+    std::cerr << summary.message << std::endl; 
+
+    return summary.IsSolutionUsable();
 }

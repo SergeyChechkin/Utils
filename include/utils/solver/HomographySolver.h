@@ -36,6 +36,12 @@ public:
         std::vector<double>& depths, 
         const Cofiguration& config);
 
+    static bool Solve_Ceres(
+        const std::vector<Eigen::Vector2d>& prev, 
+        const std::vector<Eigen::Vector2d>& next, 
+        Eigen::Vector3d& aa,  
+        Eigen::Vector3d& t);
+
     static bool Solve_Ceres_qt(
         const std::vector<Eigen::Vector2d>& prev, 
         const std::vector<Eigen::Vector2d>& next, 

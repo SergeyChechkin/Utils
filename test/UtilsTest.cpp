@@ -8,6 +8,8 @@
 #include "utils/solver/PnPSolver.h"
 #include "utils/solver/HomographySolver.h"
 #include "utils/geometry/Triangulation.h"
+#include "utils/PoseUtils.h"
+
 #include <ceres/jet.h>
 #include <gtest/gtest.h>
 #include <random>
@@ -391,6 +393,16 @@ TEST(SolverUtils, HomographyCeresAATest) {
 
     std::cout << "aa - " << aa_.transpose() << std::endl;
     std::cout << "t - " << t_.transpose() << std::endl;
+}
+
+TEST(Utils, PoseConvertionTest) {
+    Eigen::Vector<double, 6> pose_se(0.1, 0.2, 0.3, 0.4, 0.5, 0.6);
+    Eigen::Isometry3d pose_is = Convert(pose_se);
+    Eigen::Vector<double, 6> pose_se_ = Convert(pose_is);
+
+    for(size_t i = 0; i < 6; ++i) {
+        ASSERT_DOUBLE_EQ(pose_se[i], pose_se_[i]);
+    } 
 }
 
 int main(int argc, char **argv) {

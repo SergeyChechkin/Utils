@@ -7,6 +7,16 @@ Assorted utility functions and classes.
   - Perspective-n-Point transformation solver.
   
 `utils/geometry`:  
-  - Points triangulation.  
+  - Points triangulation.
+  
+`utils/features`:  
+  - KLT (Kanade-Lucas-Tomasi) features tracker with gain correction.
+  
+`utils/image`:  
+  - assorted image structures and functions.
+  
+`utils/functions`:  
+  - Piecewise function structure.
+
 ## Dependencies:
 Ceres solver, OpenCV

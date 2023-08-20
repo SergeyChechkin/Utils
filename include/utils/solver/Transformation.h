@@ -117,35 +117,9 @@ public:
         return result;
     }
 
-    static Eigen::Vector3<ceres::Jet<T, 6>> df_dps_cj(const T pose[6], const T point[3]) {
+    // Ceres Jet versions for Unit test
 
-        using JetT = ceres::Jet<double, 9>;
-        Eigen::Vector<JetT, 6> pose_j;
-        Eigen::Vector3<JetT> pt_j;
-        for(int i = 0; i < 6; ++i)  {
-            pose_j[i] = JetT(pose[i], i);
-        }
-
-        for(int i = 0; i < 3; ++i)  {
-            pt_j[i] = JetT(point[i]);
-        }
-
-        Eigen::Vector3<JetT> res_j;
-        Transformation<JetT>::f(pose_j.data(), pt_j.data(), res_j.data());
-
-        Eigen::Vector3<ceres::Jet<T, 6>> result;
-
-        for(int i = 0; i < 3; ++i) {
-            result[i].a = res_j[i].a;
-            for(int j = 0; j < 6; ++j) {
-                result[i].v[j] = res_j[i].v[j];
-            }
-        }
-
-        return result;
-    }
-
-    static Eigen::Vector3<ceres::Jet<T, 9>> df_dps_dpt_cj(const T pose[6], const T point[3]) 
+    static Eigen::Vector3<ceres::Jet<T, 9>> df_cj(const T pose[6], const T point[3]) 
     {
         using JetT = ceres::Jet<double, 9>;
         Eigen::Vector<JetT, 6> pose_j;
@@ -162,21 +136,35 @@ public:
         return res_j;
     }
 
+    /// @brief Partial derivative by pose only 
+    /// @param pose - pose
+    /// @param point - point
+    /// @return - transformed point with pose partial derivative 
+    static Eigen::Vector3<ceres::Jet<T, 6>> df_dps_cj(const T pose[6], const T point[3]) {
+
+        using JetT = ceres::Jet<double, 9>;
+        Eigen::Vector3<JetT> res_j = Transformation<JetT>::df_cj(pose, point);
+
+        Eigen::Vector3<ceres::Jet<T, 6>> result;
+
+        for(int i = 0; i < 3; ++i) {
+            result[i].a = res_j[i].a;
+            for(int j = 0; j < 6; ++j) {
+                result[i].v[j] = res_j[i].v[j];
+            }
+        }
+
+        return result;
+    }
+
+    /// @brief Partial derivative by point only 
+    /// @param pose - pose
+    /// @param point - point 
+    /// @return - transformed point with src point partial derivative 
     static Eigen::Vector3<ceres::Jet<T, 3>> df_dpt_cj(const T pose[6], const T point[3]) 
     {
         using JetT = ceres::Jet<double, 9>;
-        Eigen::Vector<JetT, 6> pose_j;
-        Eigen::Vector3<JetT> pt_j;
-        for(int i = 0; i < 6; ++i)  {
-            pose_j[i] = JetT(pose[i]);
-        }
-
-        for(int i = 0; i < 3; ++i)  {
-            pt_j[i] = JetT(point[i], i + 6);
-        }
-
-        Eigen::Vector3<JetT> res_j;
-        Transformation<JetT>::f(pose_j.data(), pt_j.data(), res_j.data());
+        Eigen::Vector3<JetT> res_j = Transformation<JetT>::df_cj(pose, point);
 
         Eigen::Vector3<ceres::Jet<T, 3>> result;
 

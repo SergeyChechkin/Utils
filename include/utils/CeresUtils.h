@@ -1,6 +1,14 @@
 #pragma once
 
 #include <ceres/ceres.h>
+#include <ceres/rotation.h>
+
+template<typename T>
+inline Eigen::Vector3<T> TransformPoint(const T pose[6], const T src[3]) {
+    Eigen::Vector3<T> result;
+    ceres::AngleAxisRotatePoint(pose, src, result.data());
+    return result + Eigen::Vector3<T>(pose + 3);
+}
 
 bool Optimize(
         ceres::Problem& problem,

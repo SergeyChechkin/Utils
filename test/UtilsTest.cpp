@@ -479,6 +479,57 @@ TEST(SolverUtils, TransformationZeroPoseOnlyTest) {
 //    std::cout << res_j << std::endl << std::endl;
 }
 
+TEST(SolverUtils, PerspectivePointJTest) { 
+    
+    const double f = 450;
+    const Eigen::Vector3d pnt(1, 2, 3);
+    auto prj = PerspectiveProjection<double>::f(f, pnt);
+    auto dprj_dpnt = PerspectiveProjection<double>::df_dpnt(f, pnt);
+    
+    //std::cout << prj.transpose() << std::endl;
+    //std::cout << dprj_dpnt << std::endl;
+     
+    using JetT = ceres::Jet<double, 3>;
+    Eigen::Vector3<JetT> pnt_j;
+    for(int i = 0; i < 3; ++i)  {
+        pnt_j[i] = JetT(pnt[i], i);
+    }
+    JetT f_j(f);
+
+    auto prj_j = PerspectiveProjection<JetT>::f(f_j, pnt_j);
+
+    //std::cout << prj_j << std::endl;
+}
+
+TEST(SolverUtils, PerspectiveZeroPoseJTest) { 
+    
+    const double f = 1;
+    const Eigen::Vector3d pnt(1, 2, 3);
+    auto prj = PerspectiveProjection<double>::f(f, pnt);
+    auto dprj_dps_zero = PerspectiveProjection<double>::df_dps_zero(f, pnt);
+    
+    std::cout << prj.transpose() << std::endl;
+    std::cout << dprj_dps_zero << std::endl;
+
+    Eigen::Vector<double, 6> pose(0, 0, 0, 0, 0, 0); 
+    using JetT = ceres::Jet<double, 6>;
+    
+    Eigen::Vector<JetT, 6> pose_j;
+    for(int i = 0; i < 6; ++i)  {
+        pose_j[i] = JetT(pose[i], i);
+    }
+
+    Eigen::Vector3<JetT> pnt_j;
+    for(int i = 0; i < 3; ++i)  {
+        pnt_j[i] = JetT(pnt[i]);
+    }
+
+    JetT f_j(f);
+
+    auto prj_j = PerspectiveProjection<JetT>::f(pose_j, f_j, pnt_j);
+
+    std::cout << prj_j << std::endl;
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

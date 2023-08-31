@@ -24,6 +24,17 @@ public:
         dst[2] += pose[5];
     }
 
+    static Eigen::Vector3<T> f(const Eigen::Vector<T, 6>& pose, const Eigen::Vector3<T>& pnt) {
+        Eigen::Vector3<T> result;
+
+        Rotation<T>::f(pose.data(), pnt.data(), result.data());
+        result[0] += pose[3];
+        result[1] += pose[4];
+        result[2] += pose[5];
+
+        return result;
+    }
+
     /// @brief pose and point derivativs  
     /// @param pose - pose 
     /// @param point - point

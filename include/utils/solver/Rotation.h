@@ -40,8 +40,8 @@ public:
         result[5] =  -pt[0];
         
         result[6] =  -pt[1];
-        result[7] =  zero;
-        result[8] =  pt[0];
+        result[7] =  pt[0];
+        result[8] =  zero;
     }
 
     /// @brief 3D point rotation partial derivative by point

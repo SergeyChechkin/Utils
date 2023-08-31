@@ -117,8 +117,31 @@ public:
         return result;
     }
 
-    // Ceres Jet versions for Unit test
 
+    /// @brief Zero pose derivativs  
+    /// @param point - point
+    /// @return - transformd point and derivative
+    inline static Eigen::Matrix<T, 3, 6> df_dps_zero(const T point[3]) {
+        static const T one = T(1.0);
+        Eigen::Matrix<T, 3, 6> result;
+        result.setZero();
+
+        result(0,1) = point[2];
+        result(0,2) = -point[1];
+        result(0,3) = one;
+
+        result(1,0) = -point[2];
+        result(1,2) = point[0];
+        result(1,4) = one;
+
+        result(2,0) = point[1];
+        result(2,1) = -point[0];
+        result(2,5) = one;
+
+        return result;
+    }
+
+    // Ceres Jet versions for Unit test
     static Eigen::Vector3<ceres::Jet<T, 9>> df_cj(const T pose[6], const T point[3]) 
     {
         using JetT = ceres::Jet<double, 9>;

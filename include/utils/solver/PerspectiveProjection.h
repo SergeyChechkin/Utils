@@ -16,7 +16,7 @@
 template<typename T>
 class PerspectiveProjection{ 
 public:
-    /// @brief unit plane projection 
+    /// @brief tranformation and unit plane projection 
     /// @param pose - pose 
     /// @param pnt - 3D point 
     /// @param prj - 2D projection
@@ -28,7 +28,7 @@ public:
         prj[1] = pnt_trans[1] / pnt_trans[2];
     }
 
-    /// @brief pose derivativs for unit plane projection  
+    /// @brief tranformation derivativs for unit plane projection  
     /// @param pose - pose 
     /// @param point - point
     /// @return - projected point and derivative
@@ -67,4 +67,32 @@ public:
         
         return result;
     }
+
+
+    static Eigen::Vector2<T> f(T f, const Eigen::Vector3<T>& pnt) {
+        Eigen::Vector2<T> result;
+
+        const T f_by_pnt_2 = f / pnt[2];
+        result[0] = f_by_pnt_2 * pnt[0];
+        result[1] = f_by_pnt_2 * pnt[1];
+
+        return result;
+    }
+
+    static Eigen::Matrix<T, 2, 3> df_dpnt(T f, const Eigen::Vector3<T>& pnt) {
+        static const T zero = T(0.0);
+    
+        Eigen::Matrix<T, 2, 3> result;
+
+        const T inv_z = T(1.0) / pnt[2];
+        const T f_by_z = f * inv_z;
+        const T f_by_z_sqr = f_by_z * inv_z;  
+        
+        result.row(0) << f_by_z, zero, pnt[0] * f_by_z_sqr;
+        result.row(1) << zero, f_by_z, pnt[1] * f_by_z_sqr;
+
+        return result;
+    }
+
+
 };

@@ -20,7 +20,7 @@ struct ImageWithGradientT {
     ImageWithGradientT() {
     }
 
-    ImageWithGradientT(const cv::Mat& src) {
+    explicit ImageWithGradientT(const cv::Mat& src) {
         gray_ = ConvertToGray(src);
         
         if constexpr(sobel_option == SobleOptions::soblel_5x5) {

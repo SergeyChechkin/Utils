@@ -531,6 +531,23 @@ TEST(SolverUtils, PerspectiveZeroPoseJTest) {
     std::cout << prj_j << std::endl;
 }
 
+TEST(SolverUtils, PoseToEigenTest) { 
+    Eigen::Vector3d pnt = {1, 2, 3}; 
+    Eigen::Vector<double, 6> pose = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+    Eigen::Vector3d trans_pnt = Transformation<double>::f(pose, pnt);
+
+    Eigen::Isometry3d ism = Transformation<double>::Convert(pose.data());
+    Eigen::Vector3d trans_pnt_ = ism * pnt;
+
+    ASSERT_DOUBLE_EQ(trans_pnt[0], trans_pnt_[0]);
+    ASSERT_DOUBLE_EQ(trans_pnt[1], trans_pnt_[1]);
+    ASSERT_DOUBLE_EQ(trans_pnt[2], trans_pnt_[2]);
+
+    Eigen::Vector<double, 6> pose_ = Transformation<double>::Convert(ism);
+
+    //std::cout << pose_.transpose() << std::endl;
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

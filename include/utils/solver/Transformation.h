@@ -212,4 +212,27 @@ public:
         return result;
     }
 
+    static Eigen::Transform<T, 3, Eigen::Isometry> Convert(const T pose[6]) {
+        Eigen::Matrix<T, 3, 3> rot_mat;
+        ceres::AngleAxisToRotationMatrix<T>(pose, rot_mat.data());
+
+        Eigen::Transform<T, 3, Eigen::Isometry> result;
+        result.linear() = rot_mat;
+        result.translation() << pose[3], pose[4], pose[5];
+
+        return result;
+    }
+
+    static Eigen::Vector<T, 6> Convert(const Eigen::Transform<T, 3, Eigen::Isometry>& ism_pose) {
+        Eigen::Vector<T, 6> result;
+        const Eigen::Matrix<T, 3, 3> rot_mat = ism_pose.linear();
+        const Eigen::Vector3<T> t = ism_pose.translation();
+
+        ceres::RotationMatrixToAngleAxis<T>(rot_mat.data(), result.data());
+        result[3] = t[0]; 
+        result[4] = t[1]; 
+        result[5] = t[2]; 
+
+        return result;
+    }
 };

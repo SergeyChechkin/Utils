@@ -20,6 +20,10 @@ struct ImageWithGradientT {
     ImageWithGradientT() {
     }
 
+    bool Empty() const  {
+        return gray_.empty();
+    }
+
     explicit ImageWithGradientT(const cv::Mat& src) {
         gray_ = ConvertToGray(src);
         

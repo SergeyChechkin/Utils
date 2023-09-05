@@ -8,6 +8,10 @@
 #include "utils/solver/PnPSolver.h"
 #include "utils/solver/HomographySolver.h"
 #include "utils/geometry/Triangulation.h"
+
+#include "utils/pipeline/Thread.h"
+#include "utils/pipeline/SPSCQueue.h"
+
 #include "utils/PoseUtils.h"
 
 #include <ceres/jet.h>
@@ -546,6 +550,69 @@ TEST(SolverUtils, PoseToEigenTest) {
     Eigen::Vector<double, 6> pose_ = Transformation<double>::Convert(ism);
 
     //std::cout << pose_.transpose() << std::endl;
+}
+
+auto ThreadTestFunc(int a, int b, bool sleep) {
+    std::cout << "ThreadTestFunc(" << a << "," << b << ")" << std::endl;
+    if (sleep) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    std::cout << "Done." << std::endl;
+
+}
+
+TEST(ThreadUtils, ThreadTest) {
+    auto t1 = ExecuteInThread(-1, ThreadTestFunc, 1, 2, true);
+    auto t2 = ExecuteInThread(1, ThreadTestFunc, 3, 4, false);
+    std::cout << "Waiting ... " << std::endl;
+    t1->join();
+    t2->join();
+    std::cout << "Main done. " << std::endl;
+}
+
+auto ReadFunction(SPSCQueue<int>& queue) {
+    while(queue.Size()) {
+        int value;
+        if (queue.Read(value)) {
+            std::cout << "Read element " << value << std::endl;
+        } else {
+            std::cout << "Failed to read an element." << std::endl;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));   
+    }
+    
+    std::cout << "Nothing to read, done." << std::endl;
+}
+
+auto WriteAllFunction(SPSCQueue<int>& queue) {
+    
+    size_t i = 0;
+    size_t count = queue.Capacity() * 2;
+
+    while(i < count) {
+        if (queue.Write(i)) {
+            std::cout << "Write element " << i << std::endl;
+            ++i;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+
+    std::cout << "Nothing to write, done." << std::endl;
+}
+
+TEST(ThreadUtils, QueueTest) {
+    SPSCQueue<int> queue(10);
+
+    auto t1 = ExecuteInThread(-1, WriteAllFunction, queue);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto t2 = ExecuteInThread(-1, ReadFunction, queue);
+
+    t2->join();
+    t1->join();
+    std::cout << "Test done. " << std::endl;
 }
 
 int main(int argc, char **argv) {

@@ -11,6 +11,7 @@
 
 #include "utils/pipeline/Thread.h"
 #include "utils/pipeline/SPSCQueue.h"
+#include "utils/pipeline/ThreadPool.h"
 
 #include "utils/PoseUtils.h"
 
@@ -614,6 +615,32 @@ TEST(ThreadUtils, QueueTest) {
     t1->join();
     std::cout << "Test done. " << std::endl;
 }
+
+int test_func(int x) {
+    if (x <= 0)
+        return 0;
+
+    return x + test_func(x-1);
+}
+
+TEST(ThreadUtils, ThreadPoolTest) {
+    ThreadPool thread_pool;
+
+    thread_pool.Start();
+    
+    for(int i = 0; i < 100; ++i) {
+        thread_pool.QueueJob([&i]{
+            test_func(100);
+        });
+    }
+
+    while(thread_pool.Busy()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    thread_pool.Stop();
+}
+
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

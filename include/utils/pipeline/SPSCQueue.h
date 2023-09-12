@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 
-// Single Produser Single Consumer, lock free queue
+// Single produser, single consumer, lock free queue.
 template<typename T>
 class SPSCQueue final{
 private:

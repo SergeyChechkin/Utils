@@ -54,7 +54,7 @@ public:
             storage_[idx].is_free_ = true;
             --size_;
         }
-        next_free_block_idx_ = idx;
+        next_free_block_idx_ = idx; // TODO: make it optional for diferent stratogy ?
     }
 private:
     void FindNextFreeBlock() noexcept {

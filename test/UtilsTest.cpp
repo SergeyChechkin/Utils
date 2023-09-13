@@ -12,6 +12,7 @@
 #include "utils/pipeline/Thread.h"
 #include "utils/pipeline/SPSCQueue.h"
 #include "utils/pipeline/ThreadPool.h"
+#include "utils/pipeline/MemoryPool.h"
 
 #include "utils/PoseUtils.h"
 
@@ -639,6 +640,33 @@ TEST(ThreadUtils, ThreadPoolTest) {
     }
 
     thread_pool.Stop();
+}
+
+struct TestStruct {
+    int v_[2];
+};
+
+TEST(ThreadUtils, MemoryPoolTest) {
+    int size = 10; 
+    MemoryPool<TestStruct> m_pool(size);
+
+    std::vector<TestStruct*> data(size);
+
+    ASSERT_EQ(size, m_pool.Capasity());
+    ASSERT_EQ(0, m_pool.Size());
+
+    for(int i = 0; i < size; ++i) {
+        data[i] = m_pool.allocate(TestStruct{i, i + 1});
+    }
+
+    ASSERT_EQ(size, m_pool.Size());
+
+    for(int i = 0; i < size; ++i) {
+        m_pool.deallocate(data[i]);
+    }
+
+        ASSERT_EQ(0, m_pool.Size());
+
 }
 
 

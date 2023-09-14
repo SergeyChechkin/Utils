@@ -13,6 +13,7 @@
 #include "utils/pipeline/SPSCQueue.h"
 #include "utils/pipeline/ThreadPool.h"
 #include "utils/pipeline/MemoryPool.h"
+#include "utils/pipeline/PipelineNode.h"
 
 #include "utils/PoseUtils.h"
 
@@ -669,6 +670,81 @@ TEST(ThreadUtils, MemoryPoolTest) {
 
 }
 
+void Node_1_func(QueueWithStatus<int>* in_queue, SPSCQueue<int>* out_queue) 
+{
+    int i = 0;
+    while(i < 20) {
+        // computation
+
+        if (out_queue->Write(i)) {
+            ++i;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        } 
+    }
+}
+
+void Node_2_func(QueueWithStatus<int>* in_queue, SPSCQueue<int>* out_queue, int multiplyer) 
+{
+    while(true) {
+        // TODO: add abort mechanism
+
+        int in_value;
+        if (in_queue->queue_->Read(in_value)) {
+            
+            // computation
+            const int out_value = in_value * multiplyer;
+
+            while(!out_queue->Write(out_value)) {
+                // TODO: add abort mechanism
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+
+        } else {
+            // check input node status and exit if input node done.
+            if (NodeStatus::done == in_queue->status_->load()) {
+                return;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+}
+
+void Node_3_func(QueueWithStatus<int>* in_queue, SPSCQueue<int>* out_queue) 
+{
+    while(true) {
+        // TODO: add abort mechanism
+        
+        int in_value;
+        if (in_queue->queue_->Read(in_value)) {
+            
+            std::cout << "Multiplication result: " << in_value << std::endl;
+        } else {
+            // check input node status and exit if input node done.
+            if (NodeStatus::done == in_queue->status_->load()) {
+                return;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+}
+
+
+TEST(ThreadUtils, PipelineTest) {
+    PipelineNode<int, int> node_1(nullptr, 10);
+    PipelineNode<int, int> node_2(node_1.GetOutQueue(), 10);
+    PipelineNode<int, int> node_3(node_2.GetOutQueue(), 10);
+
+    node_1.Start(Node_1_func);
+    node_2.Start(Node_2_func, 2);
+    node_3.Start(Node_3_func);
+
+    node_1.Join();
+    node_2.Join();
+    node_3.Join();
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

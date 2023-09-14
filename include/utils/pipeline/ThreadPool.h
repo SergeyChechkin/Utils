@@ -10,8 +10,14 @@
 #include <iostream>
 
 class ThreadPool {
+private:
+    std::queue<std::function<void()>> jobs_;
+    std::mutex queue_mutex_;
+    std::condition_variable mutex_condition_;
+    std::vector<std::thread> threads_;
+    std::atomic<bool> terminate_ = {false};
 public:
-    void Start() {
+    void Start() noexcept {
         terminate_ = false;
         const unsigned int num_threads = std::thread::hardware_concurrency();
         threads_.reserve(num_threads);
@@ -21,7 +27,7 @@ public:
     }
 
     // use case: thrad_pool.QueueJob([]{/* ... */});
-    void QueueJob(const std::function<void()>& job) {
+    void QueueJob(const std::function<void()>& job) noexcept {
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
             jobs_.push(job);
@@ -30,7 +36,7 @@ public:
         mutex_condition_.notify_one();
     }
 
-    void Stop() {
+    void Stop() noexcept {
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
             terminate_ = true;
@@ -45,7 +51,7 @@ public:
         threads_.clear();
     }
 
-    bool Busy() {
+    bool Busy() noexcept {
         bool result;
         
         {
@@ -56,7 +62,7 @@ public:
         return result;
     }
 private:
-    void ThreadLoop() {
+    void ThreadLoop() noexcept {
         while(true) {
 
             std::function<void()> job;
@@ -76,10 +82,4 @@ private:
             job();
         }
     }
-private:
-    std::queue<std::function<void()>> jobs_;
-    std::mutex queue_mutex_;
-    std::condition_variable mutex_condition_;
-    std::vector<std::thread> threads_;
-    std::atomic<bool> terminate_;
 };

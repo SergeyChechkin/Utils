@@ -6,12 +6,12 @@
 
 // Single produser, single consumer, lock free queue.
 template<typename T>
-class SPSCQueue final{
+class SPSCQueue {
 private:
     std::vector<T> storage_;
-    std::atomic<std::size_t> write_idx_ = {0};
-    std::atomic<std::size_t> read_idx_ = {0};
-    std::atomic<std::size_t> size_ = {0};
+    std::atomic<size_t> write_idx_ = {0};
+    std::atomic<size_t> read_idx_ = {0};
+    std::atomic<size_t> size_ = {0};
 
 public:
     SPSCQueue() = delete;
@@ -20,7 +20,7 @@ public:
     SPSCQueue& operator=(const SPSCQueue&) = delete;
     SPSCQueue& operator=(const SPSCQueue&&) = delete;
 
-    SPSCQueue(std::size_t storage_size) 
+    SPSCQueue(size_t storage_size) 
     : storage_(storage_size, T()) {
     }
 

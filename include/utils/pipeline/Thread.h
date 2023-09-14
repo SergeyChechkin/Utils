@@ -11,11 +11,11 @@ inline bool SetCoreId(int core_id) noexcept {
     return 0 == pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }; 
 
-template <typename T, typename... A>
+template <typename T, typename... Args>
 inline std::unique_ptr<std::thread> ExecuteInThread(
     int core_id, 
     T&& func,
-    A &&... args) noexcept {
+    Args &&... args) noexcept {
 
     std::atomic<bool> failed(false);
     std::atomic<bool> running(false);
@@ -29,7 +29,7 @@ inline std::unique_ptr<std::thread> ExecuteInThread(
         }
 
         running = true;
-        std::forward<T>(func)((std::forward<A>(args))...); 
+        std::forward<T>(func)((std::forward<Args>(args))...); 
     };
 
     auto thread = std::make_unique<std::thread>(thread_body);

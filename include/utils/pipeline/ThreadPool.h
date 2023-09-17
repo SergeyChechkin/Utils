@@ -1,5 +1,7 @@
 #pragma once
 
+#include "macros.h"
+
 #include <functional>
 #include <atomic>
 #include <thread>
@@ -17,9 +19,58 @@ private:
     std::vector<std::thread> threads_;
     std::atomic<bool> terminate_ = {false};
 public:
-    void Start() noexcept {
+    void ParallelFor(
+        size_t begin, 
+        size_t end, 
+        const std::function<void(size_t begin, size_t end)>& job, 
+        size_t num_threads = std::thread::hardware_concurrency()) noexcept 
+    {
+        const size_t size = end - begin;
+
+        if UNLIKLY(num_threads < 2 || size < 2) {
+            job(begin, end);
+            return; 
+        }
+
+        size_t interval = size / num_threads;
+        size_t residual = size % num_threads;
+
+        if UNLIKLY(interval < 1) {
+            num_threads = size;
+            interval = 1;
+            residual = 0;
+        }
+        
+        size_t job_begin = begin;
+        size_t job_end;
+
+        std::counting_semaphore semaphore_(0); 
+
+        auto thread_body = [&](size_t begin, size_t end) {
+            job(begin, end);
+            semaphore_.release();
+        };
+
+
+        while(job_begin < end) {
+            job_end = std::min(end, job_begin + interval);
+            if (residual > 0) {
+                ++job_end;
+                --residual;
+            }
+            QueueJob([=]{thread_body(job_begin, job_end);});
+            job_begin = job_end;
+        }
+
+        for(size_t i = 0; i < num_threads; ++i) {
+            semaphore_.acquire();
+        }
+    }
+
+public:
+    void Start(size_t num_threads = std::thread::hardware_concurrency()) noexcept {
+        ASSERT(num_threads > 0, "Invalid number of threads.");
         terminate_ = false;
-        const unsigned int num_threads = std::thread::hardware_concurrency();
         threads_.reserve(num_threads);
         for(unsigned int i = 0; i < num_threads; ++i) {
             threads_.emplace_back(std::thread(&ThreadPool::ThreadLoop, this));

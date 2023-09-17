@@ -21,6 +21,10 @@
 #include <gtest/gtest.h>
 #include <random>
 
+#include <thread>
+#include <shared_mutex>
+#include <semaphore>
+
 TEST(SolverUtils, RotationTest) { 
     const double aa[3] = {M_PI / 6, 0, 0};
     const double pt[3] = {1, 1, 1};
@@ -619,10 +623,8 @@ TEST(ThreadUtils, QueueTest) {
 }
 
 int test_func(int x) {
-    if (x <= 0)
-        return 0;
-
-    return x + test_func(x-1);
+    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    return x + x;
 }
 
 TEST(ThreadUtils, ThreadPoolTest) {
@@ -662,12 +664,13 @@ TEST(ThreadUtils, MemoryPoolTest) {
 
     ASSERT_EQ(size, m_pool.Size());
 
+    ASSERT_EQ(nullptr, m_pool.allocate(TestStruct{0, 1}));
+
     for(int i = 0; i < size; ++i) {
         m_pool.deallocate(data[i]);
     }
 
-        ASSERT_EQ(0, m_pool.Size());
-
+    ASSERT_EQ(0, m_pool.Size());
 }
 
 void Node_1_func(QueueWithStatus<int>* in_queue, SPSCQueue<int>* out_queue) 
@@ -715,7 +718,7 @@ void Node_3_func(QueueWithStatus<int>* in_queue, SPSCQueue<int>* out_queue)
 {
     while(true) {
         // TODO: add abort mechanism
-        
+
         int in_value;
         if (in_queue->queue_->Read(in_value)) {
             
@@ -731,7 +734,6 @@ void Node_3_func(QueueWithStatus<int>* in_queue, SPSCQueue<int>* out_queue)
     }
 }
 
-
 TEST(ThreadUtils, PipelineTest) {
     PipelineNode<int, int> node_1(nullptr, 10);
     PipelineNode<int, int> node_2(node_1.GetOutQueue(), 10);
@@ -744,6 +746,70 @@ TEST(ThreadUtils, PipelineTest) {
     node_1.Join();
     node_2.Join();
     node_3.Join();
+}
+
+#ifdef _WIN32
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
+
+const size_t size = 1000;
+std::vector<int> result(size, 0);
+
+TEST(ThreadUtils, NoParallelForTest) {
+
+
+    auto begin = __rdtsc();
+
+    for(size_t i = 0; i < size; ++i) {
+        result[i] = test_func(i);
+    }
+
+    auto end = __rdtsc();
+
+    std::cout << "NoParallelFor - " << end - begin << std::endl;
+}
+
+TEST(ThreadUtils, ParallelForTest) {
+
+    auto thread_body = [&](size_t range_begin, size_t range_end) {
+        while(range_begin < range_end) {
+            result[range_begin] = test_func(range_begin);
+            ++range_begin;
+        }
+    };
+
+    auto begin = __rdtsc();
+
+    ParallelFor(0, size, thread_body);
+
+    auto end = __rdtsc();
+
+    std::cout << "ParallelFor - " << end - begin << std::endl;
+}
+
+TEST(ThreadUtils, ParallelForPoolTest) {
+
+    auto thread_body = [&](size_t range_begin, size_t range_end) {
+        while(range_begin < range_end) {
+            result[range_begin] = test_func(range_begin);
+            ++range_begin;
+        }
+    };
+
+    ThreadPool thread_pool;
+    thread_pool.Start();
+
+    auto begin = __rdtsc();
+
+    thread_pool.ParallelFor(0, size, thread_body);
+
+    auto end = __rdtsc();
+
+    thread_pool.Stop();
+
+    std::cout << "ParallelFor Pool - " << end - begin << std::endl;
 }
 
 int main(int argc, char **argv) {

@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+//#define LIKLY(x) (__builtin_expect(!!(x), 1))
+//#define UNLIKLY(x) (__builtin_expect(!!(x), 0))
+#define LIKLY(x) (x) [[likely]]
+#define UNLIKLY(x) (x) [[unlikely]]
 
 inline auto FATAL(const std::string& msg) {
     std::cerr << "Fatal error: " << msg << std::endl;
@@ -9,7 +13,7 @@ inline auto FATAL(const std::string& msg) {
 }
 
 inline auto ASSERT(bool condition, const std::string& msg) {
-    if (!condition, 0) [[unlikely]] { 
+    if UNLIKLY(!condition) { 
         FATAL(msg);
     }
 }

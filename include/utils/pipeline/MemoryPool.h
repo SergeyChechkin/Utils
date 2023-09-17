@@ -33,13 +33,15 @@ public:
 
     template<typename...Args>
     T* allocate(Args... args) noexcept {
-        if(!storage_[next_free_block_idx_].is_free_) [[unlikely]] {
-            FindNextFreeBlock();
+        if (!storage_[next_free_block_idx_].is_free_) {
+            if (!FindNextFreeBlock()) {
+                return nullptr;
+            }
         } 
         auto block = &(storage_[next_free_block_idx_]);
         T* result = &(block->object_);
-        //result = new(result) T(args...);
-        *result = T(args...);
+        result = new(result) T(args...);
+        //*result = T(args...);
         block->is_free_ = false;
         ++size_;
 
@@ -50,21 +52,21 @@ public:
         const auto idx = (reinterpret_cast<const Block*>(v) - &(storage_[0]));  
         ASSERT(idx >= 0 && idx < storage_.size(), "Element doesn't belong to this pool.");
         
-        if (!storage_[idx].is_free_) [[unlikely]]{
+        if UNLIKLY(!storage_[idx].is_free_) {
             storage_[idx].is_free_ = true;
             --size_;
         }
-        next_free_block_idx_ = idx; // TODO: make it optional for diferent stratogy ?
+        next_free_block_idx_ = idx; // TODO: make it optional for different strategy ?
     }
 private:
-    void FindNextFreeBlock() noexcept {
-
-        ASSERT(size_ == storage_.size(), "Memory pool is full.");
+    bool FindNextFreeBlock() noexcept {
+        if(size_ == storage_.size())
+            return false;
 
         const auto initial_idx = next_free_block_idx_;
         for(; next_free_block_idx_ < storage_.size(); ++next_free_block_idx_) {
             if (storage_[next_free_block_idx_].is_free_) {
-                return;
+                return true;
             }
         }
 
@@ -72,9 +74,11 @@ private:
 
         for(; next_free_block_idx_ < initial_idx; ++next_free_block_idx_) {
             if (storage_[next_free_block_idx_].is_free_) {
-                return;
+                return true;
             }
         }
+
+        return false; // shouldn't get here. 
     }
 private:
     struct Block {

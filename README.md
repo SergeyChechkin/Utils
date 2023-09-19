@@ -18,5 +18,12 @@ Assorted utility functions and classes.
 `utils/functions`:  
   - Piecewise function structure.
 
+`utils/dataset_reader`:  
+  - EuRoC dataset reader.
+  - TUM dataset reader.
+
+`utils/pipeline`:  
+  - asynchronous computation framework / functions.
+
 ## Dependencies:
 Ceres solver, OpenCV

@@ -11,10 +11,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${CERES_INCLUDE_DIRS})
+include_directories(${YAML_CPP_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${CERES_INCLUDE_DIRS})
 
 set(SOURCES
     src/CeresUtils.cpp
@@ -27,6 +28,9 @@ set(SOURCES
 
     src/solver/HomographySolver.cpp
     src/solver/PnPSolver.cpp
+
+    src/dataset_reader/EuRoC_DatasetReader.cpp
+    src/dataset_reader/TUM_DatasetReader.cpp
 )
 
 set(HEADERS
@@ -34,7 +38,7 @@ set(HEADERS
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE include)
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${EIGEN3_LIBS} Ceres::ceres)
+target_link_libraries(${PROJECT_NAME} ${YAML_CPP_LIBRARIES} ${OpenCV_LIBS} ${EIGEN3_LIBS} Ceres::ceres)
 
 install(
   DIRECTORY include/utils

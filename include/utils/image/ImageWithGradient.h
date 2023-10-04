@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <utils/macros.h>
 #include <utils/ImageUtils.h>
 #include <opencv2/imgproc.hpp>
 
@@ -33,6 +34,8 @@ struct ImageWithGradientT {
         } else if constexpr(sobel_option == SobleOptions::soblel_3x3) {
             cv::Sobel(gray_, grad_x_, CV_32F, 1, 0, 3, 1.0 / 8.0);
             cv::Sobel(gray_, grad_y_, CV_32F, 0, 1, 3, 1.0 / 8.0);
+        } else {
+            FATAL("Incorect sobel parameter.");
         }
     }
 

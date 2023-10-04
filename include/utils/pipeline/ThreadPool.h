@@ -1,6 +1,6 @@
 #pragma once
 
-#include "macros.h"
+#include <utils/macros.h>
 
 #include <functional>
 #include <atomic>
@@ -27,7 +27,7 @@ public:
     {
         const size_t size = end - begin;
 
-        if UNLIKLY(num_threads < 2 || size < 2) {
+        if UNLIKELY(num_threads < 2 || size < 2) {
             job(begin, end);
             return; 
         }
@@ -35,7 +35,7 @@ public:
         size_t interval = size / num_threads;
         size_t residual = size % num_threads;
 
-        if UNLIKLY(interval < 1) {
+        if UNLIKELY(interval < 1) {
             num_threads = size;
             interval = 1;
             residual = 0;

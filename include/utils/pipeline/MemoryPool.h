@@ -1,6 +1,7 @@
 #pragma once
 
-#include "macros.h"
+#include <utils/macros.h>
+
 #include <vector>
 #include <iostream>
 
@@ -52,7 +53,7 @@ public:
         const auto idx = (reinterpret_cast<const Block*>(v) - &(storage_[0]));  
         ASSERT(idx >= 0 && idx < storage_.size(), "Element doesn't belong to this pool.");
         
-        if UNLIKLY(!storage_[idx].is_free_) {
+        if UNLIKELY(!storage_[idx].is_free_) {
             storage_[idx].is_free_ = true;
             --size_;
         }

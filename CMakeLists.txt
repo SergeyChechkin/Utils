@@ -25,6 +25,7 @@ set(SOURCES
     src/geometry/Triangulation.cpp
 
     src/features/KLT.cpp
+    src/features/InverseLK_Pose.cpp
 
     src/solver/HomographySolver.cpp
     src/solver/PnPSolver.cpp

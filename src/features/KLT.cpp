@@ -99,7 +99,11 @@ void KLT::Track(
     /// TODO: parallel computation
     for(size_t pnt_idx = 0; pnt_idx < pnts_size; ++pnt_idx)
     {
-        TrackPoint(src_pnts[pnt_idx], dst_pnts[pnt_idx]);
+        const auto src_pnt = src_pnts[pnt_idx];
+        const auto dst_pnt = dst_pnts[pnt_idx];
+        if (CheckPointLocation(src_pnt) && CheckPointLocation(dst_pnt)) {
+            TrackPoint(src_pnts[pnt_idx], dst_pnts[pnt_idx]);
+        }
     }
 }
 
@@ -133,6 +137,11 @@ double KLT::ComputeGain(
         const auto src_pnt = src_pnts[pnt_idx];
         const auto dst_pnt = dst_pnts[pnt_idx];
         
+        if (!CheckPointLocation(src_pnt) || !CheckPointLocation(dst_pnt))
+            continue;
+
+        int count = 0;
+
         for(int v_patch = 0; v_patch < patch_size_; ++v_patch)
         {
             for(int u_patch = 0; u_patch < patch_size_; ++u_patch)
@@ -143,6 +152,8 @@ double KLT::ComputeGain(
 
                 if (!CheckPointLocation(src_patch_pnt) || !CheckPointLocation(dst_patch_pnt))
                     continue;
+
+                ++count;
 
                 /// TODO: src point is constant, precompute outside 
                 const float src_I = std::max<float>(1.0f, BilinearValue_<float, PixelT>(src_img_.gray_, &(src_patch_pnt.x)));
@@ -171,11 +182,13 @@ double KLT::ComputeGain(
             }
         }
 
-        U_inv.block<2,2>(mat_idx_0, mat_idx_0) = U_pnt.inverse();  
+        if (count > 0) {
+            U_inv.block<2,2>(mat_idx_0, mat_idx_0) = U_pnt.inverse();  
+        }
     } 
 
     // compute exposure difference 
-    /// TODO: use sparse matrix multiplicationm. U_inv is sparse 
+    /// TODO: use sparse matrix multiplicationm? U_inv is sparse. 
     const auto Wt_U_inv = -W.transpose() * U_inv;
     const auto Wt_U_inv_W = Wt_U_inv * W;
     const auto Wt_U_inv_V = Wt_U_inv * V;
@@ -218,6 +231,11 @@ void KLT::TrackGainInvariant(
             const auto src_pnt = src_pnts[pnt_idx];
             const auto dst_pnt = dst_pnts[pnt_idx];
             
+            if (!CheckPointLocation(src_pnt) || !CheckPointLocation(dst_pnt))
+                    continue;
+
+            int count = 0;
+
             for(int v_patch = 0; v_patch < patch_size_; ++v_patch)
             {
                 for(int u_patch = 0; u_patch < patch_size_; ++u_patch)
@@ -228,6 +246,8 @@ void KLT::TrackGainInvariant(
 
                     if (!CheckPointLocation(src_patch_pnt) || !CheckPointLocation(dst_patch_pnt))
                         continue;
+
+                    ++count;
 
                     /// TODO: src point is constant, precompute outside 
                     const float src_I = std::max<float>(1.0f, BilinearValue_<float, PixelT>(src_img_.gray_, &(src_patch_pnt.x)));
@@ -255,8 +275,10 @@ void KLT::TrackGainInvariant(
                     m += 2 * beta;
                 }
             }
-
-            U_inv.block<2,2>(mat_idx_0, mat_idx_0) = U_pnt.inverse();  
+            
+            if (count > 0) {
+                U_inv.block<2,2>(mat_idx_0, mat_idx_0) = U_pnt.inverse();  
+            }
         } 
 
         // compute exposure difference 

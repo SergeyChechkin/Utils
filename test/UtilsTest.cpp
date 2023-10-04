@@ -15,6 +15,8 @@
 #include "utils/pipeline/MemoryPool.h"
 #include "utils/pipeline/PipelineNode.h"
 
+#include "utils/features/KLT.h"
+
 #include "utils/PoseUtils.h"
 
 #include <ceres/jet.h>
@@ -810,6 +812,44 @@ TEST(ThreadUtils, ParallelForPoolTest) {
     thread_pool.Stop();
 
     std::cout << "ParallelFor Pool - " << end - begin << std::endl;
+}
+
+TEST(TrackerTest, KLT_Test) { 
+
+    cv::Mat src_img(256, 256, CV_8U, cv::Scalar(0));
+    
+    cv::Mat(src_img, cv::Range(0, 128), cv::Range(0, 128)).setTo(256);
+    cv::Mat(src_img, cv::Range(128, 256), cv::Range(128, 256)).setTo(256);
+
+    cv::GaussianBlur(src_img, src_img, cv::Size(9,9), 8);
+
+    cv::Mat dst_img = 1.2 * src_img;
+    //cv::Mat dst_img = src_img;
+
+    ImageWithGradient src_img_g(src_img);
+    ImageWithGradient dst_img_g(dst_img);
+
+    KLT klt(src_img_g, dst_img_g, 7, 3);
+    
+    std::vector<cv::Point2f> src_pnts; 
+    std::vector<cv::Point2f> dst_pnts;
+
+    src_pnts.emplace_back(128, 128);
+    dst_pnts.emplace_back(127, 127);
+    
+    std::clock_t cpu_start = std::clock();
+
+    //klt.Track(src_pnts, dst_pnts);
+    
+    double gain;
+    klt.TrackGainInvariant(src_pnts, dst_pnts, gain);
+    std::cout << "gain: " << gain << std::endl;
+
+    std::clock_t cpu_end = std::clock();
+    float cpu_duration = 1000.0 * (cpu_end - cpu_start) / CLOCKS_PER_SEC;
+    std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
+
+    std::cout << "result: " << dst_pnts[0] << std::endl;
 }
 
 int main(int argc, char **argv) {

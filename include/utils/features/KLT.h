@@ -67,8 +67,8 @@ private:
     int center_offset_;
     size_t err_size_;
 
-    cv::Point2i top_left_;
-    cv::Point2i btm_rght_;
+    cv::Point2f top_left_;
+    cv::Point2f btm_rght_;
 
     static constexpr int border_ = 2;
     static constexpr float min_error_change_ = 0.05f;

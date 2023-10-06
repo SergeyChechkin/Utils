@@ -6,5 +6,9 @@
 
 #include <opencv2/core.hpp>
 
+// color convertion
 cv::Mat ConvertToGray(const cv::Mat& src);
 cv::Mat ConvertToColor(const cv::Mat& src);
+
+// concatenate images
+cv::Mat ImageCat(const cv::Mat& first, const cv::Mat& second);

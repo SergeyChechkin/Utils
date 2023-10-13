@@ -19,6 +19,7 @@ include_directories(${YAML_CPP_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INC
 
 set(SOURCES
     src/CeresUtils.cpp
+    src/PoseUtils.cpp
     
     src/image/ColorConvertion.cpp
 

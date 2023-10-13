@@ -19,7 +19,7 @@ struct ImagePyramidWithGradientT {
         return pyromid_.empty();
     }
 
-    explicit ImageWithGradientT(const cv::Mat& gray_img, int pyr_level) {
+    explicit ImagePyramidWithGradientT(const cv::Mat& gray_img, int pyr_level) {
         ASSERT(CV_8U == gray_img.type(), "Accept only gray image.");
 
         std::vector<cv::Mat> pyromid;
@@ -34,4 +34,4 @@ struct ImagePyramidWithGradientT {
     std::vector<ImageWithGradient> pyromid_;
 };
 
-using IImagePyramidWithGradient = ImagePyramidWithGradientT<SobleOptions::soblel_5x5>;
+using ImagePyramidWithGradient = ImagePyramidWithGradientT<SobleOptions::soblel_5x5>;

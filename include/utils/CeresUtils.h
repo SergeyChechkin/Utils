@@ -15,3 +15,5 @@ bool Optimize(
         bool verbal = true,
         int max_iterations = 100,
         double threshold = 1e-6);
+
+Eigen::MatrixX<double> Convert(const ceres::CRSMatrix& src);

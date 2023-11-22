@@ -27,8 +27,8 @@ set(SOURCES
 
     src/features/KLT.cpp
     src/features/InverseLK_Pose.cpp
-
-    src/solver/HomographySolver.cpp
+    src/features/HomographySolver.cpp
+    
     src/solver/PnPSolver.cpp
 
     src/dataset_reader/EuRoC_DatasetReader.cpp

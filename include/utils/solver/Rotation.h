@@ -179,6 +179,33 @@ public:
         Rotation_full<T>::f(aa, pt, Rpt);
     }
 
+    static Eigen::Vector<T, 3> f(const Eigen::Vector<T, 3>& angle_axis, const Eigen::Vector<T, 3>& pnt) {  
+        using std::hypot;
+        using std::sin;
+        using std::cos;
+        using std::fpclassify;
+        static const T one = T(1.0);
+        
+        AngleAxis<T> aa;
+        aa.theta = hypot(angle_axis[0], angle_axis[1], angle_axis[2]);
+
+        Eigen::Vector<T, 3> result;     
+        if (FP_ZERO == fpclassify(aa.theta)) {
+            Rotation_min<T>::f(angle_axis.data(), pnt.data(), result.data()); 
+            return result; 
+        }
+        
+        aa.costheta = cos(aa.theta);
+        aa.sintheta = sin(aa.theta);        
+        const T theta_inverse = one / aa.theta;
+        aa.axis[0] = angle_axis[0] * theta_inverse;
+        aa.axis[1] = angle_axis[1] * theta_inverse;
+        aa.axis[2] = angle_axis[2] * theta_inverse;
+
+        Rotation_full<T>::f(aa, pnt.data(), result.data());
+        return result;
+    }
+
     static std::vector<Eigen::Vector3<T>> f(const T angle_axis[3], std::vector<Eigen::Vector3<T>>& pts) {
         using std::hypot;
         using std::sin;

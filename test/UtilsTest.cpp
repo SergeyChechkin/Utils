@@ -6,7 +6,8 @@
 #include "utils/solver/Transformation.h"
 #include "utils/solver/PerspectiveProjection.h"
 #include "utils/solver/PnPSolver.h"
-#include "utils/solver/HomographySolver.h"
+#include "utils/solver/InverseDepth.h"
+
 #include "utils/geometry/Triangulation.h"
 
 #include "utils/pipeline/Thread.h"
@@ -16,6 +17,7 @@
 #include "utils/pipeline/PipelineNode.h"
 
 #include "utils/features/KLT.h"
+#include "utils/features/HomographySolver.h"
 
 #include "utils/PoseUtils.h"
 
@@ -850,6 +852,26 @@ TEST(TrackerTest, KLT_Test) {
     std::cout << "CPU time - " << cpu_duration << " ms." << std::endl;
 
     std::cout << "result: " << dst_pnts[0] << std::endl;
+}
+
+TEST(SolverTest, InverseDepthDerivativeTest) { 
+    Eigen::Vector2d pt = {1.1, 1.5};
+    double inv_depth = 0.2;
+
+    auto f = InverseDepth::PerspectiveReprojection<double>::f(pt, inv_depth);
+    auto df = InverseDepth::PerspectiveReprojection<double>::df_inv_d(pt, inv_depth);
+
+    using JetT = ceres::Jet<double, 1>;
+    JetT inv_depth_j = JetT(inv_depth, 0);
+    Eigen::Vector2<JetT> pt_j = pt.cast<JetT>();
+
+    Eigen::Vector3<JetT> res_j = InverseDepth::PerspectiveReprojection<JetT>::f(pt_j, inv_depth_j);
+
+    std::cout << f << std::endl;
+    std::cout << df << std::endl;
+
+
+    std::cout << res_j << std::endl;
 }
 
 int main(int argc, char **argv) {

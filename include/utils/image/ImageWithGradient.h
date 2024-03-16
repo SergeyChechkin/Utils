@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <utils/image/BilinearInterpolation.h>
 #include <utils/macros.h>
 #include <utils/ImageUtils.h>
 #include <opencv2/imgproc.hpp>
+#include <Eigen/Core>
 
 struct SobleOptions {
     static constexpr unsigned soblel_3x3 = 0;
@@ -27,7 +29,7 @@ struct ImageWithGradientT {
 
     explicit ImageWithGradientT(const cv::Mat& src) {
         gray_ = ConvertToGray(src);
-        
+
         if constexpr(sobel_option == SobleOptions::soblel_5x5) {
             cv::Sobel(gray_, grad_x_, CV_32F, 1, 0, 5, 1.0 / 128.0);
             cv::Sobel(gray_, grad_y_, CV_32F, 0, 1, 5, 1.0 / 128.0);
@@ -37,6 +39,30 @@ struct ImageWithGradientT {
         } else {
             FATAL("Incorect sobel parameter.");
         }
+    }
+
+    inline Eigen::Vector3f GetValue(int u, int v) const {
+        Eigen::Vector3f result;
+
+        result[0] = grad_x_.at<float>(v, u);
+        result[1] = grad_y_.at<float>(v, u);
+        result[2] = gray_.at<uint8_t>(v, u);
+        
+        return result;
+    }
+
+    inline Eigen::Vector3f GetValue(const float point[2]) const {
+        return GetValue(point[0], point[1]);
+    }
+
+    inline Eigen::Vector3f GetSubPixValue(const float point[2]) const {
+        Eigen::Vector3f result;
+
+        result[0] = BilinearValue_<float>(grad_x_, point);
+        result[1] = BilinearValue_<float>(grad_y_, point);
+        result[2] = BilinearValue_<float, uint8_t>(gray_, point);
+        
+        return result;
     }
 
     ImageWithGradientT<sobel_option> GetPatchSubPix(const cv::Size& patch_size, const cv::Point2f& center) const {

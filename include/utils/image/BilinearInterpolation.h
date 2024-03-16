@@ -64,3 +64,14 @@ ScalarT BilinearValue_(const cv::Mat& image, const ScalarT point[2]) {
 
     return value_0_0 * x_1 * y_1 + value_0_1 * x * y_1 + value_1_0 * x_1 * y + value_1_1 * x * y;
 }
+
+template<typename ScalarT, typename ImageT = ScalarT>
+bool BilinearImageCheck(const cv::Mat& image, const ScalarT point[2]) {
+    const ScalarT u = point[0]; 
+    const ScalarT v = point[1];
+    
+    const int left = static_cast<int>(std::floor(u));  
+    const int top = static_cast<int>(std::floor(v));
+
+    return !(left < 0 || top < 0 || left + 1 >= image.cols || top + 1 >= image.rows);
+}

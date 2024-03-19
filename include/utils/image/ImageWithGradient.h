@@ -65,6 +65,16 @@ struct ImageWithGradientT {
         return result;
     }
 
+    inline Eigen::Vector2f GetSubPixGradient(const float point[2]) const {
+        Eigen::Vector2f result;
+
+        result[0] = BilinearValue_<float>(grad_x_, point);
+        result[1] = BilinearValue_<float>(grad_y_, point);
+        
+        return result;
+    }
+
+
     ImageWithGradientT<sobel_option> GetPatchSubPix(const cv::Size& patch_size, const cv::Point2f& center) const {
         ImageWithGradientT<sobel_option> result;
 

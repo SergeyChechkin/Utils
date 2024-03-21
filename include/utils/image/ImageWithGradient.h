@@ -27,6 +27,10 @@ struct ImageWithGradientT {
         return gray_.empty();
     }
 
+    static int PatchSize() {
+        return sobel_option == SobleOptions::soblel_5x5 ? 5 : 3;
+    }
+
     explicit ImageWithGradientT(const cv::Mat& src) {
         gray_ = ConvertToGray(src);
 

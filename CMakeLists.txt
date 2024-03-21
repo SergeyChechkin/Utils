@@ -28,6 +28,7 @@ set(SOURCES
     src/features/KLT.cpp
     src/features/InverseLK_Pose.cpp
     src/features/HomographySolver.cpp
+    src/features/MinFeatureExtractor.cpp
     
     src/solver/PnPSolver.cpp
 

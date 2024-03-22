@@ -1,5 +1,6 @@
 #include "utils/features/MinFeature/MinFeatureExtractor.h"
 #include <spatial_hash/SpatialHash2DVector.h>
+#include <spatial_hash/SpatialHash2DHeap.h>
 #include <map>
 
 using namespace lib::features;
@@ -26,9 +27,8 @@ std::vector<MinFeature2D> MinFeaturesExtractor::Extract(
     const int result_size = height * width * config.square_count_ / (config.square_size_ * config.square_count_);
     // In order to have evenly distributed features
     // we limit number of features in each sector        
-    std::vector<std::pair<float, MinFeature2D>> all_features;
-    all_features.reserve(result_size); 
-    SpatialHashTable2DVector<float, size_t> hash_table(config.square_size_); 
+
+     SpatialHashTable2DHeap<float, float, MinFeature2D> hash_table_(config.square_size_, config.square_count_); 
 
     for(int v = offset; v < height - offset; ++v) {
         const float* dI_norm_row = grad_norm_sqr.ptr<float>(v);
@@ -44,33 +44,12 @@ std::vector<MinFeature2D> MinFeaturesExtractor::Extract(
                 MinFeature2D feature;
                 feature.location_ << u, v;  
                 feature.gradient_ << dIx_row[u], dIy_row[u];
-                hash_table.Add(feature.location_.data(), all_features.size());
-                all_features.push_back({dI_norm, feature});
+                hash_table_.Add(feature.location_.data(), dI_norm, feature);
             }            
         }
     }
 
-    // select fixed number of features from each sector
-    std::vector<MinFeature2D> result;
-    result.reserve(result_size);
-    
-    for(const auto& cell : hash_table.GetTable()) {
-        std::map<float, MinFeature2D, std::greater<float>> cell_features;
-        for(auto idx : cell.second) {
-            cell_features.insert(all_features[idx]);
-        }
-
-        int count = config.square_count_;
-        for(const auto& itr : cell_features) {
-            result.push_back(itr.second);
-            
-            --count;
-            if (!count)
-                break;
-        }
-    }
-
-    return result;
+    return hash_table_.GetAllData();
 }
 
 cv::Mat MinFeaturesExtractor::DisplayFeatures(

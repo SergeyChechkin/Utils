@@ -22,6 +22,10 @@ public:
         const ImageWithGradient& image, 
         const Configuration& config);   
     
+    static void SubPixelLocation(
+        const ImageWithGradient& image,
+        MinFeature2D& feature);
+
     static cv::Mat DisplayFeatures(
         const cv::Mat& image, 
         const std::vector<MinFeature2D>& features, 

@@ -52,6 +52,32 @@ std::vector<MinFeature2D> MinFeaturesExtractor::Extract(
     return hash_table_.GetAllData();
 }
 
+void MinFeaturesExtractor::SubPixelLocation(
+    const ImageWithGradient& image,
+    MinFeature2D& feature) 
+{
+    // Square polinomiial interpolation along gradient direction, max location extraction 
+    const auto unit_grad = feature.gradient_.normalized();
+
+    const Eigen::Vector2f p0 = feature.location_ - unit_grad;
+    const Eigen::Vector2f p1 = feature.location_;
+    const Eigen::Vector2f p2 = feature.location_ + unit_grad;
+
+    const float v0 = image.GetSubPixGradient(p0.data()).norm();
+    const float v1 = image.GetSubPixGradient(p1.data()).norm();
+    const float v2 = image.GetSubPixGradient(p2.data()).norm();
+
+    if (v0 > v1 || v1 < v2)
+        return;
+    
+    const float C1 = 0.5f * (v2 - v0);
+    const float C0 = (v0 - v1) + C1;
+    const float C2 = v1;
+
+    const float x = -0.5f * C1 / C0;
+    feature.location_ += x * unit_grad;
+}
+
 cv::Mat MinFeaturesExtractor::DisplayFeatures(
     const cv::Mat& image, 
     const std::vector<MinFeature2D>& features, 

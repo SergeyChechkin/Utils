@@ -32,4 +32,18 @@ public:
         cv::Vec3b color = {0, 0, 255});
 };
 
+struct MinFeaturesFrame {
+    MinFeaturesFrame() {}
+    MinFeaturesFrame(
+        const ImageWithGradient& image, 
+        const MinFeaturesExtractor::Configuration& config) 
+    : image_(image)
+    {
+        features_ = MinFeaturesExtractor::Extract(image_, config);
+    }
+
+    ImageWithGradient image_; 
+    std::vector<MinFeature2D> features_; 
+};
+
 }

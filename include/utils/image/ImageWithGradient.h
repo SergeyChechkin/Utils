@@ -27,6 +27,14 @@ struct ImageWithGradientT {
         return gray_.empty();
     }
 
+    inline int Width() const {
+        return gray_.cols;
+    }
+
+    inline int Height() const {
+        return gray_.rows;
+    }
+
     static int PatchSize() {
         return sobel_option == SobleOptions::soblel_5x5 ? 5 : 3;
     }
@@ -78,6 +86,9 @@ struct ImageWithGradientT {
         return result;
     }
 
+    inline float GetSubPixGray(const float point[2]) const {
+        return BilinearValue_<float, uint8_t>(gray_, point);
+    }
 
     ImageWithGradientT<sobel_option> GetPatchSubPix(const cv::Size& patch_size, const cv::Point2f& center) const {
         ImageWithGradientT<sobel_option> result;

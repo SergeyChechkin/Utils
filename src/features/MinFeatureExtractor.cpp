@@ -67,14 +67,11 @@ void MinFeaturesExtractor::SubPixelLocation(
     const float v1 = image.GetSubPixGradient(p1.data()).norm();
     const float v2 = image.GetSubPixGradient(p2.data()).norm();
 
-    if (v0 > v1 || v1 < v2)
-        return;
-    
-    const float C1 = 0.5f * (v2 - v0);
-    const float C0 = (v0 - v1) + C1;
-    const float C2 = v1;
+    // Square polynomial interpolation 
+    const float dx_01 = v1 - v0;
+    const float dx_12 = v2 - v1;
+    const float x = 0.5f + dx_12 / (dx_01 - dx_12);
 
-    const float x = -0.5f * C1 / C0;
     feature.location_ += x * unit_grad;
 }
 

@@ -23,9 +23,10 @@ struct ImageWithGradientT {
     ImageWithGradientT() {
     }
 
-    bool Empty() const  {
-        return gray_.empty();
-    }
+    // Common with cv::Mat interface
+    inline bool empty() const { return gray_.empty();}
+    inline int cols() const { return gray_.cols;}
+    inline int rows() const { return gray_.rows;}
 
     inline int Width() const {
         return gray_.cols;
@@ -88,6 +89,15 @@ struct ImageWithGradientT {
 
     inline float GetSubPixGray(const float point[2]) const {
         return BilinearValue_<float, uint8_t>(gray_, point);
+    }
+
+    inline Eigen::Vector2f GetGradient(int u, int v) const {
+        Eigen::Vector2f result;
+
+        result[0] = grad_x_.at<float>(v, u);
+        result[1] = grad_y_.at<float>(v, u);
+        
+        return result;
     }
 
     ImageWithGradientT<sobel_option> GetPatchSubPix(const cv::Size& patch_size, const cv::Point2f& center) const {

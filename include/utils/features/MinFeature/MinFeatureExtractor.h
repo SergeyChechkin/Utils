@@ -16,9 +16,14 @@ public:
         float threshold_ = 8;   // based on image noise 
         int square_size_ = 32;  // for even distribution 
         int square_count_ = 16; // for even distribution 
+        int dilate_size_ = 1;
     };
 public:
     static std::vector<MinFeature2D> Extract(
+        const ImageWithGradient& image, 
+        const Configuration& config);   
+
+    static std::vector<MinFeature2D> ExtractAll(
         const ImageWithGradient& image, 
         const Configuration& config);   
     

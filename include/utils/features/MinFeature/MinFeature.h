@@ -13,16 +13,41 @@ namespace lib::features {
 // Full image feature: location and information matrix. Practically a normal distribution.
 // Assumption: Edge feature.
 // We have only one principal component of info mat - gradient. 
-struct MinFeature2D {
-    MinFeature2D()
-    : location_(Eigen::Vector2f::Zero())
-    , gradient_(Eigen::Vector2f::Zero())
+template<typename T>
+struct MinFeature2D_ {
+    using PointT = Eigen::Vector2<T>; 
+    MinFeature2D_()
+    : location_(PointT::Zero())
+    , gradient_(PointT::Zero())
+    //, responce_(0)
     {
 
     }
-    
-    Eigen::Vector2f location_;
-    Eigen::Vector2f gradient_;  
+
+    PointT location_;
+    PointT gradient_;  
+    //T responce_;
 };
+
+template<typename T>
+struct MinFeature3D_ {
+    using PointT = Eigen::Vector3<T>; 
+    using VectT = Eigen::Vector3<T>; 
+    using UnitVectT = Eigen::Vector3<T>; 
+
+    MinFeature3D_() 
+    : location_(PointT::Zero())
+    , normal_(UnitVectT::Zero())
+    , edge_(UnitVectT::Zero())
+    {
+    }
+
+    PointT location_;
+    UnitVectT normal_;      // Surfase normal  
+    UnitVectT edge_;        // Edge line on the surfase plane
+};
+
+using MinFeature2D = MinFeature2D_<float>;
+using MinFeature3D = MinFeature3D_<float>;
 
 }

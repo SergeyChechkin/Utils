@@ -12,6 +12,7 @@ EuRoC_DatasetReader::EuRoC_DatasetReader(const std::string& path, bool image_onl
 
     if (!image_only) {
         LoadGroundTruth();
+        LoadIMU();
         cam0_ = LoadCameraConfig("/mav0/cam0/sensor.yaml");
         cam1_ = LoadCameraConfig("/mav0/cam1/sensor.yaml");
     }
@@ -96,6 +97,37 @@ std::optional<EuRoC_DatasetReader::GroundTruth> EuRoC_DatasetReader::GetGT() {
     gts_.pop();
     return gt;
 }  
+
+void EuRoC_DatasetReader::LoadIMU() {
+    std::string imu_file_name = path_ + "/mav0/imu0/data.csv";  
+    std::ifstream imu_file(imu_file_name);
+
+    if (imu_file.is_open()) {
+        std::string line;
+        // skip column headers
+        std::getline(imu_file, line);
+
+        while(std::getline(imu_file, line))
+		{
+			std::stringstream ss(line);
+            ImuRecord imu;
+            char c;
+            ss >> imu.time_ >> c;
+            ss >> imu.w_RS_S_.x() >> c >> imu.w_RS_S_.y() >> c >> imu.w_RS_S_.z() >> c;
+            ss >> imu.a_RS_S_.x() >> c >> imu.a_RS_S_.y() >> c >> imu.a_RS_S_.z();
+            imus_.push(imu);
+		}
+    }
+}
+
+std::optional<EuRoC_DatasetReader::ImuRecord> EuRoC_DatasetReader::GetIMU() {
+    if (imus_.empty()) 
+        return {};
+    
+    auto imu = imus_.front();
+    imus_.pop();
+    return imu;
+}
 
 EuRoC_DatasetReader::CameraConfig EuRoC_DatasetReader::LoadCameraConfig(std::string sub_path) {
     CameraConfig result;

@@ -21,6 +21,12 @@ public:
         cv::Mat frame_1_;           /// rught
     };
 
+    struct ImuRecord {
+        uint64_t time_;
+        Eigen::Vector3d w_RS_S_;    /// gyro [rad s^-1]
+        Eigen::Vector3d a_RS_S_;    /// accelerometer [m s^-2]  
+    };
+
     struct GroundTruth {
         uint64_t time_;
         Eigen::Vector3f p_RS_R_;    /// position [m]
@@ -34,6 +40,7 @@ public:
     EuRoC_DatasetReader(const std::string& path, bool image_only = false);
     std::optional<StereoImage> GetImage();
     std::optional<GroundTruth> GetGT();
+    std::optional<ImuRecord> GetIMU();
 
     Eigen::Isometry3d GetExtrinsic_cam0() const {return cam0_.extr_;}
     Eigen::Isometry3d GetExtrinsic_cam1() const {return cam1_.extr_;}
@@ -43,6 +50,7 @@ public:
 private:
     void LoadImages();
     void LoadGroundTruth();
+    void LoadIMU();
     
     struct CameraConfig {
         Eigen::Isometry3d extr_;
@@ -65,6 +73,7 @@ private:
     std::string path_;
     std::queue<StereoImgNames> imgs_; 
     std::queue<GroundTruth> gts_; 
+    std::queue<ImuRecord> imus_; 
     CameraConfig cam0_;
     CameraConfig cam1_;
 };
